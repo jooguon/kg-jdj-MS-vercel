@@ -1,26 +1,118 @@
 @import "tailwindcss";
 
+/* Light, fresh gallery palette: white walls, crimson accents, a touch of gold. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #fbfaf8;
+  --surface: #f4f2ee;
+  --card: #ffffff;
+  --ink: #1c1b1a;
+  --muted: #74716c;
+  --line: #e9e5de;
+  --accent: #b52130;
+  --accent-soft: #fbecee;
+  --accent-ink: #ffffff;
+  --gold: #c7a15a;
+  --gold-soft: #f7efdf;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --font-sans: var(--font-sans-kr), system-ui, sans-serif;
+  --font-serif: var(--font-serif-kr), "Times New Roman", serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--bg);
+  color: var(--ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  /* Korean: wrap between words, not in the middle of them. */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* Title artwork is a white-on-transparent mask, tinted with background-color. */
+.logo-mask {
+  -webkit-mask: url("/logo-mask.png") center / contain no-repeat;
+  mask: url("/logo-mask.png") center / contain no-repeat;
+  aspect-ratio: 1884 / 421;
+}
+
+/* Thin gilded frame with a white mat, used around paintings. */
+.frame {
+  padding: 10px;
+  background: linear-gradient(135deg, #e3c98f, #b98e45 45%, #e8d3a3 70%, #a97d38);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 22px 44px -22px rgb(70 45 10 / 0.45);
+}
+.frame > * {
+  background: #fff;
+  padding: 8px;
+}
+
+.shadow-soft {
+  box-shadow: 0 1px 2px rgb(30 20 10 / 0.04), 0 10px 30px -14px rgb(30 20 10 / 0.18);
+}
+
+@keyframes hammer {
+  0% { transform: rotate(-35deg); }
+  55% { transform: rotate(8deg); }
+  70% { transform: rotate(-4deg); }
+  100% { transform: rotate(0); }
+}
+.animate-hammer {
+  transform-origin: 80% 80%;
+  animation: hammer 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+@keyframes stamp {
+  0% { opacity: 0; transform: scale(1.8) rotate(-10deg); }
+  60% { opacity: 1; transform: scale(0.95) rotate(-10deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-10deg); }
+}
+.animate-stamp {
+  animation: stamp 0.45s ease-out both;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-rise {
+  animation: rise 0.4s ease-out both;
+}
+
+@keyframes drain {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+.animate-drain {
+  transform-origin: left;
+  animation: drain linear both;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(181 33 48 / 0.45); }
+  100% { box-shadow: 0 0 0 14px rgb(181 33 48 / 0); }
+}
+.animate-pulse-ring {
+  animation: pulse-ring 1.4s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hammer, .animate-stamp, .animate-rise, .animate-pulse-ring { animation: none; }
 }
