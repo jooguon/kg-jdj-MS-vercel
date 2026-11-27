@@ -43,7 +43,7 @@ export function Certificate({
   const canExhibit = sold && appraisal.exhibitable;
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+    <section className="mx-auto w-full max-w-6xl overflow-x-clip px-4 py-10 sm:px-6 sm:py-14">
       <p className={`mx-auto w-fit rounded-full px-3 py-1 text-xs font-semibold ${sold ? "bg-yellow" : "bg-surface"}`}>{sold ? "🎉 낙찰 증서" : "경매 결과"}</p>
       <Headline className="mt-4 text-4xl sm:text-6xl">
         {sold ? (
@@ -78,7 +78,7 @@ export function Certificate({
 
           <div className="mt-8 border-t border-line pt-6">
             <p className="eyebrow">{sold ? "최종 가상 낙찰가" : "경매 결과"}</p>
-            <p className={`mt-2 flex items-center gap-3 text-5xl font-semibold tracking-[-0.04em] tabular-nums ${sold ? "text-primary" : "text-muted"}`}>
+            <p className={`mt-2 flex items-center gap-3 text-[clamp(2rem,10vw,3rem)] leading-tight font-semibold tracking-[-0.04em] whitespace-nowrap tabular-nums md:text-[clamp(2rem,4vw,3rem)] ${sold ? "text-primary" : "text-muted"}`}>
               {sold && <RedDot className="size-3.5 animate-stamp" />}
               {sold ? formatWonDigits(result.price) : "유찰"}
             </p>

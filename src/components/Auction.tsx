@@ -101,7 +101,7 @@ export function Auction({
   const canShill = mode === "bidding" && revealed >= 1 && revealed < plan.length && !extra;
 
   return (
-    <section className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-6 sm:px-6 sm:py-12 md:grid-cols-[1fr_1fr] md:items-start md:gap-16">
+    <section className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 px-4 py-6 sm:px-6 sm:py-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start md:gap-16 [&>*]:min-w-0">
       {/* The work on the block */}
       <div>
         {/* Smaller on phones so the live bidding panel stays on screen */}
@@ -138,7 +138,7 @@ export function Auction({
 
         <div className="py-6">
           <p className="eyebrow">현재 가상 입찰가</p>
-          <p className="mt-2 text-5xl font-semibold tracking-[-0.04em] text-primary tabular-nums sm:text-6xl">
+          <p className="mt-2 text-[clamp(2rem,10vw,3.75rem)] leading-tight font-semibold tracking-[-0.04em] whitespace-nowrap text-primary tabular-nums md:text-[clamp(2.25rem,4.5vw,3.75rem)]">
             <CountUp value={current} />
           </p>
         </div>

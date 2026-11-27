@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState, useSyncExternalStore } from "react";
 import { lotNumber, type Appraisal } from "@/lib/auction";
+import { useDevice } from "@/lib/device";
 import { renderCertificate } from "@/lib/resultCard";
 import type { ArtStyle } from "@/lib/styles";
 import { randomWord } from "@/lib/words";
@@ -67,6 +68,8 @@ export function Game() {
   const [result, setResult] = useState<AuctionResult | null>(null);
   const [exhibit, setExhibit] = useState<ExhibitState>({ status: "idle" });
   const [saving, setSaving] = useState(false);
+  const [savedImage, setSavedImage] = useState<string | null>(null);
+  const device = useDevice();
   const submissionId = useRef(0);
 
   const go = (p: Phase) => {
@@ -137,11 +140,18 @@ export function Game() {
         result,
       });
       const file = new File([blob], `balderby-lot-${lot}.png`, { type: "image/png" });
-      const isTouch = window.matchMedia("(pointer: coarse)").matches;
-      if (isTouch && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "발더비 경매장 낙찰 증서" }).catch(() => undefined);
+      const url = URL.createObjectURL(blob);
+      if (device.touch && navigator.canShare?.({ files: [file] })) {
+        // Phones: the share sheet has "Save image".
+        const shared = await navigator
+          .share({ files: [file], title: "발더비 경매장 낙찰 증서" })
+          .then(() => true)
+          .catch((e: Error) => e.name === "AbortError");
+        if (!shared) setSavedImage(url);
+      } else if (device.inApp || device.ios) {
+        // In-app browsers and iOS without share support ignore downloads: show the image to long-press instead.
+        setSavedImage(url);
       } else {
-        const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = file.name;
@@ -225,6 +235,29 @@ export function Game() {
           />
         )}
       </main>
+      {savedImage && (
+        <SaveSheet
+          src={savedImage}
+          onClose={() => {
+            URL.revokeObjectURL(savedImage);
+            setSavedImage(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Fallback when the browser can't download files: long-press the image to save it. */
+function SaveSheet({ src, onClose }: { src: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-ink/80 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] backdrop-blur-sm" onClick={onClose}>
+      <p className="rounded-full bg-yellow px-4 py-2 text-sm font-bold">이미지를 길게 눌러 저장하세요</p>
+      {/* eslint-disable-next-line @next/next/no-img-element -- generated certificate blob */}
+      <img src={src} alt="낙찰 증서" className="max-h-[75dvh] w-auto max-w-full rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
+      <button type="button" onClick={onClose} className="rounded-full bg-white px-6 py-3 font-bold">
+        닫기
+      </button>
     </div>
   );
 }
@@ -240,7 +273,7 @@ function Lobby({ storedName, onEnter }: { storedName: string; onEnter: (name: st
   const name = draft ?? storedName;
 
   return (
-    <section className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-16 px-4 py-12 sm:px-6 md:grid-cols-[1fr_1.1fr] md:py-20">
+    <section className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-16 overflow-x-clip px-4 py-12 sm:px-6 md:grid-cols-[1fr_1.1fr] md:py-20">
       <div className="animate-rise">
         <p className="inline-flex rounded-full bg-yellow px-3 py-1 text-xs font-semibold">✦ 15초 발그림 경매장</p>
         <h1 className="mt-6 w-full max-w-md">
@@ -268,7 +301,7 @@ function Lobby({ storedName, onEnter }: { storedName: string; onEnter: (name: st
             onChange={(e) => setDraft(e.target.value)}
             maxLength={12}
             placeholder="무명 작가"
-            className="min-w-0 flex-1 bg-transparent py-2 text-[15px] font-medium outline-none placeholder:text-muted/60"
+            className="min-w-0 flex-1 bg-transparent py-2 text-base font-medium outline-none placeholder:text-muted/60"
             aria-label="작가명"
           />
           <button type="submit" className={`${btn.primary} py-3`}>
@@ -285,7 +318,7 @@ function Lobby({ storedName, onEnter }: { storedName: string; onEnter: (name: st
         {LOBBY_WORKS.map((w, i) => (
           <figure key={w.id} className={`relative ${i === 1 ? "row-span-2 self-center" : ""}`}>
             <span
-              className={`absolute -z-10 ${i === 0 ? "-top-4 -left-4 size-2/3 rounded-full bg-sky" : i === 1 ? "-right-4 -bottom-4 size-3/4 rounded-[2rem] bg-pink" : "-bottom-4 -left-4 size-3/5 rotate-12 rounded-3xl bg-yellow"}`}
+              className={`absolute -z-10 ${i === 0 ? "-top-3 -left-2 size-2/3 rounded-full bg-sky sm:-top-4 sm:-left-4" : i === 1 ? "-right-2 -bottom-3 size-3/4 rounded-[2rem] bg-pink sm:-right-4 sm:-bottom-4" : "-bottom-3 -left-2 size-3/5 rotate-12 rounded-3xl bg-yellow sm:-bottom-4 sm:-left-4"}`}
               aria-hidden
             />
             {/* eslint-disable-next-line @next/next/no-img-element -- static example */}
@@ -300,7 +333,7 @@ function Lobby({ storedName, onEnter }: { storedName: string; onEnter: (name: st
             </figcaption>
           </figure>
         ))}
-        <figure className="absolute -top-8 -left-6 z-10 w-24 rotate-[-6deg] rounded-lg border-2 border-ink bg-white p-1.5 shadow-[3px_3px_0_var(--ink)] sm:w-28">
+        <figure className="absolute -top-8 left-0 z-10 w-20 rotate-[-6deg] sm:-left-6 sm:w-24 md:w-28 rounded-lg border-2 border-ink bg-white p-1.5 shadow-[3px_3px_0_var(--ink)] ">
           {/* eslint-disable-next-line @next/next/no-img-element -- static example */}
           <img src="/examples/doodle.png" alt="15초 만에 그린 고양이 낙서" className="aspect-square w-full object-cover" />
           <figcaption className="pt-1 text-center text-[10px] text-muted">원본 · 15초</figcaption>

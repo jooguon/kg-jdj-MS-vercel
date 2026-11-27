@@ -19,7 +19,7 @@ export function TopBar({ step, onHome }: { step?: StepId; onHome?: () => void })
   const logo = <Logo className="h-5 sm:h-6" color="var(--primary)" />;
   const current = STEPS.findIndex((s) => s.id === step);
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-bg/80 backdrop-blur-md">
+    <header className="sticky top-0 z-20 border-b border-line bg-bg/80 pt-[env(safe-area-inset-top)] backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
         {onHome ? (
           <button type="button" onClick={onHome} aria-label="처음으로">
