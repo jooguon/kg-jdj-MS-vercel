@@ -7,7 +7,7 @@ import { getStore } from "@/lib/store";
 
 export const metadata: Metadata = {
   title: "전시관 · 발더비 경매장",
-  description: "발더비 경매장에서 낙찰된 발그림 명화들. 가장 비싸게 팔린 작품은 무엇일까요?",
+  description: "발더비 경매장에서 낙찰된 발그림들. 가장 비싸게 팔린 작품은 무엇일까요?",
 };
 
 const RANKED = 4;

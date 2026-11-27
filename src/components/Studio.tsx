@@ -1,26 +1,28 @@
 "use client";
 
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type CSSProperties } from "react";
 import { ART_STYLES, type ArtStyle } from "@/lib/styles";
-import { INKS, todayTrend, type DoodleStats } from "@/lib/trends";
+import { INKS, todayTrend } from "@/lib/trends";
 import { DrawingCanvas, type CanvasHandle, type CanvasInfo } from "./DrawingCanvas";
-import { btn, Headline } from "./ui";
 
 export const DRAW_SECONDS = 15;
 
 const ERASER = "#ffffff";
 const BRUSHES = [
-  { name: "가는 붓", value: 10 },
-  { name: "굵은 붓", value: 28 },
+  { name: "가는 붓", value: 10, dot: "size-2.5" },
+  { name: "굵은 붓", value: 28, dot: "size-5" },
 ];
-
-// Capped by viewport height so the whole studio fits on a laptop screen.
-const CANVAS_MAX = "max(20rem, calc(100dvh - 250px))";
 
 const EMPTY: CanvasInfo = {
   strokes: 0,
   stats: { coverage: 0, share: { black: 0, red: 0, blue: 0, gold: 0, green: 0 }, colors: [] },
 };
+
+/**
+ * Desktop: tool bar | canvas | styles, all three columns ending on the same line.
+ * The canvas width is capped by viewport height so the studio fits on a laptop screen.
+ */
+const GRID_VARS = { "--cw": "min(520px, max(360px, calc(100dvh - 345px)))" } as CSSProperties;
 
 export function Studio({
   word,
@@ -62,7 +64,9 @@ export function Studio({
   }, [startedAt]);
 
   const seconds = Math.ceil(left / 1000);
+  const urgent = !!startedAt && !timeUp && seconds <= 5;
   const ready = info.strokes > 0 && info.stats.coverage > 0 && style;
+  const trendMet = info.strokes > 0 && trend.test(info.stats);
 
   const submit = () => {
     if (!ready || !canvas.current) return;
@@ -70,23 +74,22 @@ export function Studio({
   };
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-      <Headline className="text-[22px] sm:text-4xl">당신의 발그림, 얼마일까요?</Headline>
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3.5 py-1.5 text-accent">
-          🔥 오늘의 트렌드 · <b>{trend.name}</b> <b>×{trend.multiplier}</b>
+    <section className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-7">
+      {/* Title + today's trend */}
+      <h1 className="text-center text-[28px] leading-tight font-black tracking-[-0.05em] sm:text-[44px]">
+        당신의 <span className="text-primary">발그림</span>, 얼마일까요?
+      </h1>
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+        <span className={`rounded-full px-4 py-2 text-sm font-extrabold transition ${trendMet ? "bg-mint" : "bg-yellow"}`}>
+          {trendMet ? "✓ 트렌드 적중" : "🔥 오늘의 트렌드"} · {trend.name} ×{trend.multiplier}
         </span>
-        {trend.test(info.stats) && info.strokes > 0 ? (
-          <span className="rounded-full bg-ink px-2.5 py-1 text-xs font-medium text-white">✓ 트렌드 조건 충족!</span>
-        ) : (
-          <span className="text-xs text-muted">{trend.hint}하면 낙찰가가 올라요</span>
-        )}
+        <span className="text-sm font-medium text-muted">{trendMet ? "이대로면 낙찰가가 껑충 뛰어요" : `${trend.hint} 낙찰가 UP`}</span>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[auto_minmax(0,1fr)_300px] lg:items-start lg:gap-x-5">
-        {/* Tools */}
-        <div className="order-2 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-card p-2.5 shadow-soft lg:order-none lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:w-[96px] lg:flex-col lg:flex-nowrap lg:py-4">
-          <div className="flex gap-2 lg:flex-col" role="radiogroup" aria-label="물감 색">
+      <div className="mt-7 grid grid-cols-1 gap-5 lg:grid-cols-[76px_var(--cw)_minmax(300px,380px)] lg:items-stretch lg:justify-center lg:gap-6" style={GRID_VARS}>
+        {/* Tool bar */}
+        <aside className="soft order-2 flex min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-3xl bg-card px-3 py-2.5 sm:justify-between lg:order-none lg:flex-col lg:flex-nowrap lg:rounded-full lg:px-0 lg:py-5">
+          <div className="flex items-center gap-2 lg:flex-col lg:gap-3" role="radiogroup" aria-label="물감 색">
             {INKS.map((c) => (
               <button
                 key={c.id}
@@ -96,68 +99,67 @@ export function Studio({
                 aria-label={c.name}
                 title={c.name}
                 onClick={() => setColor(c.value)}
-                className={`size-8 rounded-full transition lg:size-9 ${color === c.value ? "ring-2 ring-ink ring-offset-2" : "hover:scale-110"}`}
+                className={`size-7 rounded-full transition sm:size-8 lg:size-9 ${color === c.value ? "ring-[3px] ring-primary ring-offset-2" : "hover:scale-110"}`}
                 style={{ backgroundColor: c.value }}
               />
             ))}
           </div>
-          <span className="mx-1 h-7 w-px bg-line lg:my-1 lg:h-px lg:w-10" aria-hidden />
-          <div className="flex gap-1.5 lg:flex-col">
-            {BRUSHES.map((b) => (
-              <button
-                key={b.value}
-                type="button"
-                aria-pressed={!erasing && brush === b.value}
-                title={b.name}
-                onClick={() => {
-                  setBrush(b.value);
-                  if (erasing) setColor(INKS[0].value);
-                }}
-                className={`flex h-9 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs whitespace-nowrap transition lg:w-[76px] ${
-                  !erasing && brush === b.value ? "bg-ink text-white" : "text-muted hover:bg-surface"
-                }`}
-              >
-                <span className="rounded-full bg-current" style={{ width: b.value / 3, height: b.value / 3 }} />
-                <span>{b.name}</span>
-              </button>
-            ))}
+          <div className="flex items-center gap-1.5 lg:flex-col lg:gap-3">
+            {BRUSHES.map((b) => {
+              const on = !erasing && brush === b.value;
+              return (
+                <button
+                  key={b.value}
+                  type="button"
+                  aria-pressed={on}
+                  aria-label={b.name}
+                  title={b.name}
+                  onClick={() => {
+                    setBrush(b.value);
+                    if (erasing) setColor(INKS[0].value);
+                  }}
+                  className={`flex size-9 items-center justify-center rounded-full transition lg:size-11 ${on ? "bg-primary text-white" : "bg-surface text-ink hover:bg-line"}`}
+                >
+                  <span className={`rounded-full bg-current ${b.dot}`} />
+                </button>
+              );
+            })}
           </div>
-          <span className="mx-1 h-7 w-px bg-line lg:my-1 lg:h-px lg:w-10" aria-hidden />
-          <div className="flex gap-1 lg:flex-col">
-            <ToolButton label="지우개" icon="◇" active={erasing} onClick={() => setColor(ERASER)} />
-            <ToolButton label="되돌리기" icon="↶" disabled={!info.strokes || timeUp} onClick={() => canvas.current?.undo()} />
-            <ToolButton label="초기화" icon="↻" disabled={!info.strokes || timeUp} onClick={() => canvas.current?.clear()} />
+          <div className="flex items-center gap-1.5 lg:flex-col lg:gap-2">
+            <RoundTool label="지우개" icon="⌫" active={erasing} onClick={() => setColor(ERASER)} />
+            <RoundTool label="되돌리기" icon="↶" disabled={!info.strokes || timeUp} onClick={() => canvas.current?.undo()} />
+            <RoundTool label="초기화" icon="↻" disabled={!info.strokes || timeUp} onClick={() => canvas.current?.clear()} />
           </div>
-        </div>
+        </aside>
 
         {/* Canvas */}
-        <div className="order-1 mx-auto w-full lg:order-none lg:col-start-2 lg:row-start-1" style={{ maxWidth: CANVAS_MAX }}>
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
+        <div className="order-1 flex min-w-0 flex-col lg:order-none">
+          <div className="mb-3 flex h-[52px] items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-serif text-xl font-black tabular-nums text-white transition-colors ${
-                  timeUp ? "bg-muted" : seconds <= 5 && startedAt ? "bg-accent animate-pulse-ring" : "bg-accent"
+                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xl font-black tabular-nums text-white transition-colors sm:px-5 sm:py-2.5 sm:text-2xl ${
+                  timeUp ? "bg-muted" : urgent ? "animate-pulse-ring bg-accent" : "bg-primary"
                 }`}
                 aria-live="polite"
               >
-                <span aria-hidden className="text-base">⏱</span>00:{String(seconds).padStart(2, "0")}
+                <span aria-hidden>⏱</span>00:{String(seconds).padStart(2, "0")}
               </span>
-              <span className="hidden text-sm text-muted sm:inline">
-                {timeUp ? "시간 종료! 화풍을 고르고 감정을 맡기세요" : startedAt ? "15초 안에 그려주세요" : "첫 획을 긋는 순간 시작돼요"}
+              <span className="hidden text-xs leading-snug font-semibold text-muted xl:block">
+                {timeUp ? "시간 끝!" : startedAt ? "망설이면 늦어요" : "첫 획부터 시작"}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-right">
-              <span className="text-sm text-muted">제시어</span>
-              <span className="font-serif text-2xl font-black">{word}</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-sm font-bold text-muted sm:text-base">제시어</span>
+              <span className="text-[28px] leading-none font-black tracking-[-0.04em] sm:text-[34px]">{word}</span>
               {canReroll && !startedAt && (
-                <button type="button" onClick={onReroll} className="rounded-full border border-line px-2.5 py-1 text-xs text-muted hover:border-ink/30 hover:text-ink">
+                <button type="button" onClick={onReroll} className="self-center rounded-full bg-surface px-2.5 py-1 text-xs font-bold text-muted hover:text-ink">
                   바꾸기
                 </button>
               )}
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-2xl border border-line shadow-soft">
+          <div className="soft relative overflow-hidden rounded-[28px] bg-white">
             <DrawingCanvas
               ref={canvas}
               color={color}
@@ -166,50 +168,90 @@ export function Studio({
               onStrokeStart={() => setStartedAt((t) => t ?? performance.now())}
               onChange={setInfo}
             />
+            <div className="absolute inset-x-0 top-0 h-1.5 bg-surface">
+              <div className={`h-full ${urgent ? "bg-accent" : "bg-primary"}`} style={{ width: `${(left / (DRAW_SECONDS * 1000)) * 100}%`, transition: "width 100ms linear" }} />
+            </div>
             {timeUp && (
-              <div className="pointer-events-none absolute inset-x-0 top-0 bg-ink/75 py-2 text-center text-sm font-medium text-white">
-                붓을 내려놓으세요! 이제 화풍을 골라 감정을 맡기세요
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-primary py-3 text-center text-sm font-bold text-white">
+                붓을 내려놓으세요! 이제 화풍을 고를 차례예요
               </div>
             )}
           </div>
 
+          <dl className="mt-4 flex items-baseline justify-center gap-7 text-[15px] font-bold text-muted">
+            {[
+              ["획 수", String(info.strokes)],
+              ["색상", String(info.stats.colors.length)],
+              ["채움률", `${Math.round(info.stats.coverage * 100)}%`],
+            ].map(([k, v]) => (
+              <div key={k} className="flex items-baseline gap-1.5">
+                <dt>{k}</dt>
+                <dd className="text-2xl font-black text-primary tabular-nums">{v}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
 
-        <div className="order-3 mx-auto w-full lg:order-none lg:col-start-2 lg:row-start-2" style={{ maxWidth: CANVAS_MAX }}>
-          <Stats info={info.stats} strokes={info.strokes} />
-        </div>
+        {/* Styles: fills the canvas column height so both end on the same line */}
+        <div className="order-3 flex min-w-0 flex-col lg:order-none">
+          <div className="mb-3 flex h-[52px] items-center justify-between">
+            <p className="text-2xl font-black tracking-[-0.04em]">화풍을 골라주세요</p>
+            <button
+              type="button"
+              onClick={() => setStyle(ART_STYLES[Math.floor(Math.random() * ART_STYLES.length)])}
+              className="rounded-full bg-surface px-3 py-1.5 text-xs font-bold text-muted transition hover:bg-pink hover:text-ink"
+            >
+              🎲 랜덤
+            </button>
+          </div>
 
-        {/* Styles */}
-        <div className="order-4 lg:order-none lg:col-start-3 lg:row-span-2 lg:row-start-1">
-          <p className="mb-3 text-center font-serif text-lg font-bold">화풍을 골라주세요</p>
-          <div className="grid grid-cols-4 gap-2 lg:grid-cols-2 lg:gap-3">
+          <ul className="grid flex-1 auto-rows-fr grid-cols-2 gap-2.5">
             {ART_STYLES.map((s) => {
               const selected = style?.id === s.id;
               return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setStyle(s)}
-                  aria-pressed={selected}
-                  className={`group relative overflow-hidden rounded-xl border-2 bg-card text-left transition ${
-                    selected ? "border-accent shadow-[0_6px_18px_-8px_rgb(181_33_48/0.6)]" : "border-transparent hover:border-line"
-                  }`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- small static previews */}
-                  <img src={`/samples/${s.id}.webp`} alt="" className="aspect-[4/3] w-full object-cover transition group-hover:scale-105 lg:aspect-[16/9]" />
-                  <span className="block truncate px-1 py-1.5 text-center text-xs font-medium sm:text-sm lg:py-1">{s.name}</span>
-                  {selected && (
-                    <span className="absolute top-1.5 right-1.5 flex size-6 items-center justify-center rounded-full bg-accent text-xs text-white shadow" aria-hidden>
-                      ✓
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => setStyle(s)}
+                    aria-pressed={selected}
+                    className="relative flex h-full w-full items-center gap-2.5 rounded-2xl p-2 pr-3 text-left transition hover:brightness-[0.97]"
+                    style={{ backgroundColor: selected ? s.color : `${s.color}33` }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- tiny static thumbnails */}
+                    <img src={`/styles/${s.id}.webp`} alt="" className="size-11 shrink-0 rounded-xl object-cover" />
+                    <span className="min-w-0">
+                      <span className="block truncate text-[15px] leading-tight font-extrabold">{s.name}</span>
+                      <span className="block truncate text-[11px] font-semibold opacity-50">{s.en}</span>
                     </span>
-                  )}
-                </button>
+                    {selected && (
+                      <span className="absolute top-1/2 right-2.5 flex size-6 -translate-y-1/2 items-center justify-center rounded-full bg-ink text-xs text-white" aria-hidden>
+                        ✓
+                      </span>
+                    )}
+                  </button>
+                </li>
               );
             })}
-          </div>
-          <p className="mt-2 min-h-5 text-center text-xs text-muted">{style ? style.tagline : "고양이 낙서를 각 화풍으로 복원한 예시예요"}</p>
+          </ul>
 
-          <button type="button" onClick={submit} disabled={!ready} className={`${btn.primary} mt-4 w-full text-lg ${ready && timeUp ? "animate-pulse-ring" : ""}`}>
+          <p className="mt-3 min-h-5 truncate text-sm font-medium text-muted">
+            {style ? (
+              <>
+                <b className="font-extrabold text-ink">{style.name}</b> — {style.tagline}
+              </>
+            ) : (
+              "고전 유화부터 팝아트, 수묵화까지 하나만 골라 주세요"
+            )}
+          </p>
+
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!ready}
+            className={`mt-3 flex h-[60px] w-full items-center justify-center rounded-full bg-primary text-lg font-black text-white shadow-[0_12px_24px_-12px_rgb(59_91_255/0.9)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:bg-primary/25 disabled:shadow-none disabled:hover:translate-y-0 ${
+              ready && timeUp ? "animate-pulse-ring" : ""
+            }`}
+          >
             {!info.strokes ? "먼저 그림을 그려주세요" : !style ? "화풍을 골라주세요" : "감정 맡기기 →"}
           </button>
         </div>
@@ -218,37 +260,20 @@ export function Studio({
   );
 }
 
-function ToolButton({ label, icon, onClick, disabled, active }: { label: string; icon: string; onClick: () => void; disabled?: boolean; active?: boolean }) {
+function RoundTool({ label, icon, onClick, disabled, active }: { label: string; icon: string; onClick: () => void; disabled?: boolean; active?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       aria-pressed={active}
-      className={`flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs whitespace-nowrap transition disabled:opacity-35 lg:w-[76px] lg:justify-start ${
-        active ? "bg-ink text-white" : "text-muted hover:bg-surface hover:text-ink"
+      aria-label={label}
+      title={label}
+      className={`flex size-9 items-center justify-center rounded-full text-lg font-bold transition disabled:opacity-30 lg:size-11 ${
+        active ? "bg-primary text-white" : "bg-surface text-muted hover:bg-line hover:text-ink"
       }`}
     >
-      <span aria-hidden className="text-sm">{icon}</span>
-      {label}
+      {icon}
     </button>
-  );
-}
-
-function Stats({ info, strokes }: { info: DoodleStats; strokes: number }) {
-  const items = [
-    ["획 수", String(strokes)],
-    ["색상", String(info.colors.length)],
-    ["채움률", `${Math.round(info.coverage * 100)}%`],
-  ];
-  return (
-    <dl className="flex items-center justify-center divide-x divide-line rounded-xl border border-line bg-card py-2.5 shadow-soft">
-      {items.map(([k, v]) => (
-        <div key={k} className="flex items-baseline gap-2 px-5">
-          <dt className="text-sm text-muted">{k}</dt>
-          <dd className="font-serif text-xl font-black text-accent tabular-nums">{v}</dd>
-        </div>
-      ))}
-    </dl>
   );
 }

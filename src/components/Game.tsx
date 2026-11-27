@@ -11,7 +11,7 @@ import { Auction, type AuctionResult } from "./Auction";
 import { Certificate, type ExhibitState } from "./Certificate";
 import { Logo } from "./Logo";
 import { Studio } from "./Studio";
-import { btn, TopBar, type StepId } from "./ui";
+import { btn, RedDot, TopBar, type StepId } from "./ui";
 
 type Phase = "lobby" | StepId;
 type Painting = { image: string; sig: string; mock?: boolean };
@@ -229,77 +229,99 @@ export function Game() {
   );
 }
 
+const LOBBY_WORKS = [
+  { id: "pop-art", title: "노란 고양이의 15분", medium: "캔버스에 실크스크린", price: "₩412,000,000" },
+  { id: "fauvism", title: "분홍 하늘 아래 야옹", medium: "캔버스에 유채", price: "₩1,280,000,000" },
+  { id: "watercolor", title: "봄날의 낮잠", medium: "종이에 수채", price: "₩96,000,000" },
+];
+
 function Lobby({ storedName, onEnter }: { storedName: string; onEnter: (name: string) => void }) {
   const [draft, setDraft] = useState<string | null>(null);
   const name = draft ?? storedName;
 
   return (
-    <section className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-4 py-10 sm:px-6 md:grid-cols-[1.05fr_1fr] md:py-16">
+    <section className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-16 px-4 py-12 sm:px-6 md:grid-cols-[1fr_1.1fr] md:py-20">
       <div className="animate-rise">
-        <p className="text-xs font-medium tracking-[0.3em] text-accent">15초 발그림 경매장</p>
-        <h1 className="mt-5 w-full max-w-lg">
-          <Logo className="w-full" />
+        <p className="inline-flex rounded-full bg-yellow px-3 py-1 text-xs font-semibold">✦ 15초 발그림 경매장</p>
+        <h1 className="mt-6 w-full max-w-md">
+          <Logo className="w-full" color="var(--primary)" />
         </h1>
-        <p className="mt-7 font-serif text-2xl font-bold sm:text-3xl">당신의 발그림, 얼마일까요?</p>
-        <p className="mt-3 max-w-md leading-relaxed text-pretty text-muted">
-          제시어를 <b className="text-ink">15초</b> 안에 그리면 원하는 화풍의 명화로 복원해 경매에 올려 드려요. 가상 큰손들이 값을 매기고, 낙찰된 작품은 전시관에 걸려요.
+        <p className="mt-10 text-3xl font-bold tracking-[-0.04em] sm:text-4xl">
+          당신의 <span className="relative inline-block">발그림<span className="absolute inset-x-0 bottom-1 -z-10 h-3 bg-pink/70" /></span>,
+          <br />
+          얼마일까요?
+        </p>
+        <p className="mt-4 max-w-sm leading-relaxed text-pretty text-muted">
+          제시어를 15초 안에 그리면 고전 유화부터 팝아트, 수묵화까지 원하는 화풍의 그림으로 다시 그려 경매에 올려 드려요.
         </p>
 
         <form
-          className="mt-8 flex max-w-md flex-col gap-3 sm:flex-row"
+          className="mt-10 flex max-w-md items-center gap-2 rounded-full border-2 border-ink bg-card p-1.5 pl-5 shadow-[4px_4px_0_var(--ink)]"
           onSubmit={(e) => {
             e.preventDefault();
             onEnter(name);
           }}
         >
-          <label className="flex flex-1 items-center gap-2 rounded-xl border border-line bg-card px-4 shadow-soft focus-within:border-ink/40">
-            <span className="shrink-0 text-sm text-muted">작가명</span>
-            <input
-              value={name}
-              onChange={(e) => setDraft(e.target.value)}
-              maxLength={12}
-              placeholder="무명 작가"
-              className="min-w-0 flex-1 bg-transparent py-3.5 font-medium outline-none placeholder:text-muted/60"
-              aria-label="작가명"
-            />
-          </label>
-          <button type="submit" className={btn.primary}>
-            화실 입장 →
+          <span className="eyebrow shrink-0">작가명</span>
+          <input
+            value={name}
+            onChange={(e) => setDraft(e.target.value)}
+            maxLength={12}
+            placeholder="무명 작가"
+            className="min-w-0 flex-1 bg-transparent py-2 text-[15px] font-medium outline-none placeholder:text-muted/60"
+            aria-label="작가명"
+          />
+          <button type="submit" className={`${btn.primary} py-3`}>
+            화실 입장
           </button>
         </form>
-        <Link href="/gallery" className="mt-4 inline-block text-sm text-muted underline-offset-4 hover:text-ink hover:underline">
-          지금까지 낙찰된 작품 구경하기 →
+        <Link href="/gallery" className="mt-5 inline-block text-sm text-muted underline-offset-4 hover:text-ink hover:underline">
+          지금까지 낙찰된 작품 보기 →
         </Link>
       </div>
 
-      <div className="relative mx-auto w-full max-w-md animate-rise" style={{ animationDelay: "120ms" }}>
-        <div className="frame rotate-1">
-          <div>
-            {/* eslint-disable-next-line @next/next/no-img-element -- static sample */}
-            <img src="/samples/renaissance.webp" alt="고양이 낙서를 르네상스 유화로 복원한 예시" className="aspect-square w-full object-cover" />
-          </div>
-        </div>
-        <figure className="absolute -bottom-6 -left-4 w-[38%] -rotate-3 bg-white p-2 pb-1.5 shadow-soft sm:-left-8">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static sample */}
-          <img src="/samples/doodle.png" alt="15초 만에 그린 고양이 낙서" className="aspect-square w-full border border-line object-cover" />
-          <figcaption className="pt-1 text-center text-[11px] text-muted">원본 발그림 · 15초</figcaption>
+      {/* A small wall of example works, all made from the same 15-second cat doodle */}
+      <div className="relative grid grid-cols-2 gap-x-6 gap-y-10 animate-rise" style={{ animationDelay: "120ms" }}>
+        {LOBBY_WORKS.map((w, i) => (
+          <figure key={w.id} className={`relative ${i === 1 ? "row-span-2 self-center" : ""}`}>
+            <span
+              className={`absolute -z-10 ${i === 0 ? "-top-4 -left-4 size-2/3 rounded-full bg-sky" : i === 1 ? "-right-4 -bottom-4 size-3/4 rounded-[2rem] bg-pink" : "-bottom-4 -left-4 size-3/5 rotate-12 rounded-3xl bg-yellow"}`}
+              aria-hidden
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element -- static example */}
+            <img src={`/examples/${w.id}.webp`} alt={w.title} className="hung aspect-square w-full rounded-xl object-cover" />
+            <figcaption className="mt-3 text-xs leading-relaxed">
+              <p className="font-semibold">{w.title}</p>
+              <p className="text-muted">{w.medium}</p>
+              <p className="mt-0.5 flex items-center gap-1.5 tabular-nums">
+                <RedDot className="size-2" />
+                {w.price}
+              </p>
+            </figcaption>
+          </figure>
+        ))}
+        <figure className="absolute -top-8 -left-6 z-10 w-24 rotate-[-6deg] rounded-lg border-2 border-ink bg-white p-1.5 shadow-[3px_3px_0_var(--ink)] sm:w-28">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static example */}
+          <img src="/examples/doodle.png" alt="15초 만에 그린 고양이 낙서" className="aspect-square w-full object-cover" />
+          <figcaption className="pt-1 text-center text-[10px] text-muted">원본 · 15초</figcaption>
         </figure>
-        <div className="absolute -top-4 -right-3 rotate-6 rounded-xl bg-card px-4 py-2.5 text-right shadow-soft sm:-right-6">
-          <p className="text-[11px] text-muted">최종 가상 낙찰가</p>
-          <p className="font-serif text-xl font-black text-accent">₩256,000,000</p>
-        </div>
       </div>
 
-      <ol className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4 md:col-span-2">
+      <ol className="grid grid-cols-2 gap-x-6 gap-y-6 border-t border-line pt-8 sm:grid-cols-4 md:col-span-2 md:mt-4">
         {[
           ["01", "화실", "15초 안에 제시어 그리기"],
           ["02", "감정", "AI 감정사의 천재성 분석"],
           ["03", "경매", "가상 큰손들의 실시간 응찰"],
           ["04", "증서", "낙찰 증서 받고 전시관에 걸기"],
         ].map(([n, t, d]) => (
-          <li key={n} className="rounded-2xl border border-line bg-card p-4 shadow-soft">
-            <span className="font-serif text-sm font-bold text-gold">{n}</span>
-            <p className="mt-1 font-bold">{t}</p>
+          <li key={n}>
+            <span
+              className="flex size-9 items-center justify-center rounded-full font-accent text-lg italic"
+              style={{ backgroundColor: ["var(--sky)", "var(--pink)", "var(--yellow)", "var(--mint)"][Number(n) - 1] }}
+            >
+              {n}
+            </span>
+            <p className="mt-2 text-[15px] font-semibold">{t}</p>
             <p className="mt-0.5 text-xs text-muted">{d}</p>
           </li>
         ))}

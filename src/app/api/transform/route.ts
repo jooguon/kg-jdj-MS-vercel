@@ -1,5 +1,6 @@
 import { toFile } from "openai";
-import { buildPaintPrompt } from "@/lib/paintPrompt";
+import sharp from "sharp";
+import { buildArtPrompt, pickScene } from "@/lib/paintPrompt";
 import { errorResponse, isMockMode, openai, rateLimit, readSubmission } from "@/lib/server";
 import { paintingSig, sha256 } from "@/lib/ticket";
 
@@ -16,15 +17,14 @@ export async function POST(req: Request) {
 
     if (isMockMode()) {
       await new Promise((r) => setTimeout(r, 3000));
-      const sample = await fetch(new URL(`/samples/${sub.style.id}.webp`, req.url)).then((r) => r.arrayBuffer());
-      const buf = Buffer.from(sample);
+      const buf = await sharp(sub.png).webp({ quality: 85 }).toBuffer();
       return Response.json({ image: `data:image/webp;base64,${buf.toString("base64")}`, sig: paintingSig(doodleHash, buf), mock: true });
     }
 
     const res = await openai().images.edit({
       model: MODEL,
       image: await toFile(sub.png, "doodle.png", { type: "image/png" }),
-      prompt: buildPaintPrompt(sub.style, sub.word),
+      prompt: buildArtPrompt(sub.style, sub.word, pickScene(sub.style)),
       quality: QUALITY,
       size: "1024x1024",
       output_format: "webp",

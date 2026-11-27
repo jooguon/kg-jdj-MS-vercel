@@ -9,7 +9,7 @@ export function CompareSlider({ painting, doodle }: { painting: string; doodle: 
   return (
     <div className="relative aspect-square w-full select-none overflow-hidden">
       {/* eslint-disable-next-line @next/next/no-img-element -- data URLs from the API */}
-      <img src={painting} alt="명화로 복원된 작품" className="absolute inset-0 size-full object-cover" draggable={false} />
+      <img src={painting} alt="완성된 그림" className="absolute inset-0 size-full object-cover" draggable={false} />
       {/* eslint-disable-next-line @next/next/no-img-element -- data URL from the canvas */}
       <img
         src={doodle}
@@ -24,14 +24,14 @@ export function CompareSlider({ painting, doodle }: { painting: string; doodle: 
         </span>
       </div>
       <span className="pointer-events-none absolute top-2 left-2 rounded-sm bg-white/90 px-1.5 py-0.5 text-[11px] font-medium text-ink">원본</span>
-      <span className="pointer-events-none absolute top-2 right-2 rounded-sm bg-ink/80 px-1.5 py-0.5 text-[11px] font-medium text-paper">복원작</span>
+      <span className="pointer-events-none absolute top-2 right-2 rounded-sm bg-ink/80 px-1.5 py-0.5 text-[11px] font-medium text-paper">완성작</span>
       <input
         type="range"
         min={0}
         max={100}
         value={pos}
         onChange={(e) => setPos(Number(e.target.value))}
-        aria-label="원본과 복원작 비교"
+        aria-label="원본과 완성작 비교"
         className="absolute inset-0 size-full cursor-ew-resize opacity-0"
       />
     </div>

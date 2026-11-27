@@ -4,7 +4,7 @@ import { useEffect, useEffectEvent, useMemo, useState } from "react";
 import { roundPrice, type Appraisal, type ShillResult } from "@/lib/auction";
 import { getBidder } from "@/lib/bidders";
 import type { ArtStyle } from "@/lib/styles";
-import { BidderAvatar, CountUp, FramedArt } from "./ui";
+import { BidderAvatar, CountUp, HungArt, RedDot, WallLabel } from "./ui";
 
 export type AuctionResult = { price: number; winner: string; token: string; shill?: "won" | "lost" };
 
@@ -101,106 +101,98 @@ export function Auction({
   const canShill = mode === "bidding" && revealed >= 1 && revealed < plan.length && !extra;
 
   return (
-    <section className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-6 sm:px-6 sm:py-8 md:grid-cols-[1.05fr_1fr] md:items-start md:gap-10">
-      {/* Artwork on the block */}
-      <div className="relative rounded-3xl bg-gradient-to-b from-surface to-bg px-6 pt-8 pb-10 sm:px-10">
-        <div className="pointer-events-none absolute inset-x-10 top-0 h-40 rounded-b-full bg-[radial-gradient(ellipse_at_top,rgb(255_244_214/0.9),transparent_70%)]" aria-hidden />
-        <div className="relative">
-          <FramedArt painting={painting} doodle={doodle} />
+    <section className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-6 sm:px-6 sm:py-12 md:grid-cols-[1fr_1fr] md:items-start md:gap-16">
+      {/* The work on the block */}
+      <div>
+        {/* Smaller on phones so the live bidding panel stays on screen */}
+        <div className="relative mx-auto max-w-[15rem] sm:max-w-xs md:max-w-md">
+          <HungArt art={painting} doodle={doodle} color={style.color} />
           {mode === "hammer" && (
             <div className="absolute inset-0 flex items-center justify-center">
               <span
-                className={`animate-stamp rounded-lg border-[5px] bg-white/90 px-5 py-2 font-serif text-5xl font-black sm:text-6xl ${
-                  sold ? "border-accent text-accent" : "border-muted text-muted"
-                }`}
+                className={`flex -rotate-6 items-center gap-2.5 rounded-2xl border-2 border-ink px-7 py-3 text-3xl font-black shadow-[5px_5px_0_var(--ink)] animate-stamp ${sold ? "bg-yellow" : "bg-card text-muted"}`}
               >
-                {sold ? "낙찰" : "유찰"}
+                {sold && <RedDot className="size-4" />}
+                {sold ? "낙찰!" : "유찰"}
               </span>
             </div>
           )}
         </div>
-        <div className="relative mt-8 border-l-4 border-accent pl-4">
-          <h2 className="font-serif text-2xl font-black text-balance sm:text-3xl">{appraisal.title}</h2>
-          <p className="mt-1 text-sm text-muted">
-            {artist} 작 · {style.name} · 제시어 ‘{word}’
-          </p>
-        </div>
+        <WallLabel className="mx-auto mt-8 max-w-[15rem] sm:max-w-xs md:mt-10 md:max-w-md" artist={artist} title={appraisal.title} medium={`${style.medium} · 제시어 ‘${word}’`} />
       </div>
 
       {/* Live panel */}
-      <div className="flex flex-col gap-4 rounded-3xl border border-line bg-card p-5 shadow-soft sm:p-6">
-        <div className="flex items-center justify-between text-sm">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1 font-bold text-white">
-            <span className="size-2 animate-pulse rounded-full bg-white" /> LIVE
+      <div className="flex flex-col rounded-3xl border-2 border-ink bg-card p-5 shadow-[6px_6px_0_var(--primary)] sm:p-6">
+        <div className="flex items-center justify-between border-b border-line pb-4">
+          <span className="inline-flex items-center gap-2 text-sm font-semibold">
+            <span className="relative flex size-2.5">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-accent" />
+            </span>
+            <span className="font-accent text-lg italic">Live</span> 실시간 경매
           </span>
-          <span className="font-medium tracking-wider text-muted tabular-nums">
-            {noBids ? "응찰 대기" : extra ? "바람잡이 라운드" : `ROUND ${revealed} / ${plan.length}`}
+          <span className="text-sm text-muted tabular-nums">
+            {noBids ? "응찰 대기" : extra ? "바람잡이 라운드" : `Round ${revealed} / ${plan.length}`}
           </span>
         </div>
 
-        <div>
-          <p className="text-sm text-muted">현재 가상 입찰가</p>
-          <p className="mt-1 font-serif text-4xl font-black tracking-tight tabular-nums sm:text-5xl">
+        <div className="py-6">
+          <p className="eyebrow">현재 가상 입찰가</p>
+          <p className="mt-2 text-5xl font-semibold tracking-[-0.04em] text-primary tabular-nums sm:text-6xl">
             <CountUp value={current} />
           </p>
         </div>
 
-        <ul className="flex min-h-[260px] flex-col gap-2" aria-live="polite">
+        <ul className="flex min-h-[248px] flex-col gap-1.5" aria-live="polite">
           {noBids && (
-            <li className="rounded-xl border border-dashed border-line px-4 py-8 text-center text-muted">
-              {mode === "hammer" ? "끝내 손을 드는 사람이 없었습니다…" : "응찰자를 기다리는 중…"}
-            </li>
+            <li className="py-10 text-center text-muted">{mode === "hammer" ? "끝내 손을 드는 사람이 없었습니다…" : "응찰자를 기다리는 중…"}</li>
           )}
           {entries.slice(0, 4).map((e, i) => (
             <li
               key={`${e.kind}-${e.bidder}-${e.price}`}
-              className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 animate-rise ${
-                e.kind === "shill-lost"
-                  ? "border-accent/40 bg-accent-soft"
-                  : e.kind === "shill-won"
-                    ? "border-gold bg-gold-soft"
-                    : i === 0
-                      ? "border-ink/15 bg-card"
-                      : "border-line bg-card opacity-70"
-              }`}
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 animate-rise ${e.kind === "shill-lost" ? "bg-accent-soft" : e.kind === "shill-won" ? "bg-yellow" : i === 0 ? "bg-surface" : "opacity-45"}`}
             >
               {e.kind === "shill-lost" ? (
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white text-2xl" aria-hidden>
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xl" aria-hidden>
                   🚨
                 </span>
               ) : (
                 <BidderAvatar id={e.bidder} />
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold">{e.kind === "shill-lost" ? "경매사" : getBidder(e.bidder).name}</p>
+                <p className={`text-sm font-semibold ${e.kind === "shill-lost" ? "text-accent" : ""}`}>
+                  {e.kind === "shill-lost" ? "경매사" : getBidder(e.bidder).name}
+                  {e.kind === "shill-won" && <span className="ml-1.5 text-xs font-medium text-accent">바람잡이에 낚임</span>}
+                </p>
                 <p className="truncate text-sm text-muted">{e.line}</p>
               </div>
-              {e.kind !== "shill-lost" && <span className="shrink-0 text-xs font-medium text-accent tabular-nums">{(e.price / 10_000).toLocaleString("ko-KR")}만</span>}
+              {e.kind !== "shill-lost" && <span className="shrink-0 text-sm tabular-nums">{(e.price / 10_000).toLocaleString("ko-KR")}만</span>}
             </li>
           ))}
         </ul>
+
+        <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-surface">
+          {mode === "bidding" && (
+            <div key={revealed} className="h-full rounded-full bg-primary animate-drain" style={{ animationDuration: `${revealed === 0 ? 900 : ROUND_MS}ms` }} />
+          )}
+        </div>
+        <p className="mt-2 text-xs text-muted">{mode === "hammer" ? "경매 종료" : mode === "shilling" ? "장내가 술렁입니다…" : "다음 입찰까지"}</p>
 
         <button
           type="button"
           onClick={shill}
           disabled={!canShill}
-          className="flex flex-col items-center rounded-xl bg-gradient-to-r from-[#ff8a3d] to-[#f0453a] px-4 py-3 text-white shadow-[0_10px_24px_-10px_rgb(240_69_58/0.7)] transition hover:brightness-105 active:scale-[0.99] disabled:opacity-35 disabled:shadow-none"
+          className="mt-5 flex items-center justify-between rounded-full border-2 border-ink bg-accent py-2.5 pr-2.5 pl-6 text-white shadow-[3px_3px_0_var(--ink)] transition hover:-translate-y-0.5 active:translate-y-0 disabled:border-line disabled:bg-surface disabled:text-muted disabled:shadow-none"
         >
-          <span className="text-lg font-black">{mode === "shilling" ? "바람잡이 잠입 중…" : extra ? "바람잡이 투입 완료" : "😏 바람잡이 투입"}</span>
-          <span className="text-xs opacity-90">성공하면 2배 · 발각되면 0원 · 한 번만</span>
+          <span className="text-left">
+            <span className="block text-[15px] font-semibold">{mode === "shilling" ? "바람잡이 잠입 중…" : extra ? "바람잡이 투입 완료" : "바람잡이 투입"}</span>
+            <span className="block text-xs opacity-80">성공하면 2배 · 발각되면 0원 · 단 한 번</span>
+          </span>
+          <span className="flex size-10 items-center justify-center rounded-full bg-white/20 text-lg" aria-hidden>
+            🤫
+          </span>
         </button>
-        {shillError && <p className="text-center text-sm text-accent">{shillError}</p>}
-
-        <div>
-          <div className="mb-1.5 flex justify-between text-xs text-muted">
-            <span>{mode === "hammer" ? "경매 종료" : mode === "shilling" ? "장내가 술렁입니다…" : "다음 입찰까지"}</span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-surface">
-            {mode === "bidding" && (
-              <div key={revealed} className="h-full rounded-full bg-gold animate-drain" style={{ animationDuration: `${revealed === 0 ? 900 : ROUND_MS}ms` }} />
-            )}
-          </div>
-        </div>
+        {shillError && <p className="mt-2 text-center text-sm text-accent">{shillError}</p>}
       </div>
     </section>
   );

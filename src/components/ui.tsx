@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { formatWonDigits } from "@/lib/auction";
-import { getBidder } from "@/lib/bidders";
+import { bidderImage, getBidder } from "@/lib/bidders";
 import { Logo } from "./Logo";
 
 export const STEPS = [
@@ -16,9 +16,10 @@ export const STEPS = [
 export type StepId = (typeof STEPS)[number]["id"];
 
 export function TopBar({ step, onHome }: { step?: StepId; onHome?: () => void }) {
-  const logo = <Logo className="h-6 sm:h-7" />;
+  const logo = <Logo className="h-5 sm:h-6" color="var(--primary)" />;
+  const current = STEPS.findIndex((s) => s.id === step);
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-bg/85 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-line bg-bg/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
         {onHome ? (
           <button type="button" onClick={onHome} aria-label="처음으로">
@@ -29,31 +30,28 @@ export function TopBar({ step, onHome }: { step?: StepId; onHome?: () => void })
             {logo}
           </Link>
         )}
-        <nav className="flex items-center gap-1 text-sm">
+        <nav className="flex items-center gap-5 text-sm">
           {step && (
             <ol className="hidden items-center gap-1 sm:flex" aria-label="진행 단계">
-              {STEPS.map((s) => (
+              {STEPS.map((s, i) => (
                 <li
                   key={s.id}
                   aria-current={s.id === step ? "step" : undefined}
-                  className={`rounded-full px-3.5 py-1.5 font-medium transition ${
-                    s.id === step ? "bg-accent text-accent-ink" : "text-muted"
-                  }`}
+                  className={`rounded-full px-3 py-1 transition ${i === current ? "bg-primary font-semibold text-white" : i < current ? "text-ink/70" : "text-muted/70"}`}
                 >
+                  <span className="mr-1 font-accent text-[13px] italic">{String(i + 1).padStart(2, "0")}</span>
                   {s.label}
                 </li>
               ))}
             </ol>
           )}
           {step && (
-            <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-ink sm:hidden">
-              {STEPS.find((s) => s.id === step)?.label}
+            <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-white sm:hidden">
+              <span className="font-accent italic opacity-70">{String(current + 1).padStart(2, "0")} </span>
+              {STEPS[current]?.label}
             </span>
           )}
-          <Link
-            href="/gallery"
-            className="ml-1 rounded-full border border-line bg-card px-3.5 py-1.5 font-medium text-ink transition hover:border-ink/30 sm:ml-3"
-          >
+          <Link href="/gallery" className="rounded-full bg-yellow px-3.5 py-1.5 text-[13px] font-semibold transition hover:-translate-y-0.5">
             전시관
           </Link>
         </nav>
@@ -62,53 +60,72 @@ export function TopBar({ step, onHome }: { step?: StepId; onHome?: () => void })
   );
 }
 
-/** Serif headline with the little sparkle strokes from the title design. */
 export function Headline({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return (
-    <h1 className={`flex items-center justify-center gap-3 text-center font-serif font-black tracking-tight ${className}`}>
-      <Spark className="-scale-x-100" />
-      <span>{children}</span>
-      <Spark />
-    </h1>
-  );
+  return <h1 className={`text-center font-bold tracking-[-0.035em] text-balance ${className}`}>{children}</h1>;
 }
 
-function Spark({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={`size-5 shrink-0 text-gold sm:size-6 ${className}`} aria-hidden>
-      <path d="M3 8 L11 11 M5 15 L12 14 M9 3 L13 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
-    </svg>
-  );
-}
-
-/** Painting in a gilded frame with the original doodle pinned to the corner. */
-export function FramedArt({ painting, doodle, caption = "원본 발그림", className = "" }: { painting: string; doodle?: string; caption?: string; className?: string }) {
+/** The painting on a pop-colored backdrop, with the original doodle pinned to the corner like a sticker. */
+export function HungArt({ art, doodle, color = "var(--pink)", className = "" }: { art: string; doodle?: string; color?: string; className?: string }) {
   return (
     <div className={`relative ${className}`}>
-      <div className="frame">
-        <div>
-          {/* eslint-disable-next-line @next/next/no-img-element -- data URLs and API images */}
-          <img src={painting} alt="명화로 복원된 작품" className="aspect-square w-full object-cover" />
-        </div>
-      </div>
+      <span className="absolute -top-4 -left-4 h-3/4 w-3/4 rounded-[2rem]" style={{ backgroundColor: color }} aria-hidden />
+      {/* eslint-disable-next-line @next/next/no-img-element -- data URLs and API images */}
+      <img src={art} alt="완성된 그림" className="hung relative aspect-square w-full rounded-2xl bg-white object-cover" />
       {doodle && (
-        <figure className="absolute -right-2 -bottom-3 w-[24%] min-w-16 rotate-2 bg-white p-1.5 pb-1 shadow-soft sm:-right-4">
+        <figure className="absolute -right-3 -bottom-5 w-[26%] min-w-16 rotate-[4deg] rounded-lg border-2 border-ink bg-white p-1.5 shadow-[3px_3px_0_var(--ink)] sm:-right-6">
           {/* eslint-disable-next-line @next/next/no-img-element -- data URLs and API images */}
-          <img src={doodle} alt="원본 낙서" className="aspect-square w-full border border-line object-cover" />
-          <figcaption className="pt-1 text-center text-[10px] text-muted sm:text-[11px]">{caption}</figcaption>
+          <img src={doodle} alt="원본 낙서" className="aspect-square w-full rounded object-cover" />
+          <figcaption className="pt-1 text-center text-[10px] text-muted">원본 · 15초</figcaption>
         </figure>
       )}
     </div>
   );
 }
 
+/** Museum wall label: artist, title, medium, price. */
+export function WallLabel({
+  artist,
+  title,
+  medium,
+  price,
+  sold,
+  className = "",
+}: {
+  artist: string;
+  title: string;
+  medium: string;
+  price?: string;
+  sold?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={`text-sm leading-relaxed ${className}`}>
+      <p className="font-semibold">{artist}</p>
+      <p>
+        <i className="not-italic">{title}</i>, <span className="font-accent italic">2026</span>
+      </p>
+      <p className="text-muted">{medium}</p>
+      {price && (
+        <p className="mt-1 flex items-center gap-1.5 tabular-nums">
+          {sold && <RedDot />}
+          {price}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Galleries put a red dot next to a sold work. */
+export function RedDot({ className = "size-2.5" }: { className?: string }) {
+  return <span className={`inline-block shrink-0 rounded-full bg-accent ${className}`} aria-label="판매됨" />;
+}
+
 export function BidderAvatar({ id, size = "md" }: { id: string; size?: "sm" | "md" | "lg" }) {
   const b = getBidder(id);
-  const cls = size === "lg" ? "size-14 text-3xl" : size === "sm" ? "size-8 text-base" : "size-11 text-2xl";
+  const cls = size === "lg" ? "size-12" : size === "sm" ? "size-8" : "size-10";
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-full ${cls}`} style={{ backgroundColor: b.tint }} aria-hidden>
-      {b.emoji}
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element -- small static portraits
+    <img src={bidderImage(b.id)} alt={b.name} title={b.name} className={`shrink-0 rounded-full bg-surface object-cover ${cls}`} />
   );
 }
 
@@ -148,8 +165,9 @@ export function useCycle(length: number, ms: number, active = true) {
 
 export const btn = {
   primary:
-    "inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 font-bold text-accent-ink shadow-[0_8px_20px_-8px_rgb(181_33_48/0.55)] transition hover:brightness-110 active:scale-[0.99] disabled:opacity-40 disabled:shadow-none",
+    "inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_20px_-10px_rgb(59_91_255/0.8)] transition hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 disabled:bg-primary/25 disabled:shadow-none",
   outline:
-    "inline-flex items-center justify-center gap-2 rounded-xl border border-ink/80 bg-card px-6 py-3.5 font-bold text-ink transition hover:bg-surface active:scale-[0.99] disabled:opacity-40",
-  ghost: "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-surface hover:text-ink",
+    "inline-flex items-center justify-center gap-2 rounded-full border-2 border-ink bg-card px-6 py-3 text-[15px] font-semibold text-ink transition hover:-translate-y-0.5 hover:bg-yellow active:translate-y-0 disabled:opacity-40",
+  accent:
+    "inline-flex items-center justify-center gap-2 rounded-full bg-pink px-6 py-3.5 text-[15px] font-semibold text-ink transition hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 disabled:opacity-35",
 };

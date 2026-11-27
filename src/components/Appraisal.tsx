@@ -16,7 +16,7 @@ const QUOTES = [
 
 // Rough durations used to animate the progress bar.
 const EXPECTED_JUDGE_MS = 5000;
-const EXPECTED_PAINT_MS = 16000;
+const EXPECTED_ART_MS = 16000;
 
 export function Appraisal({
   doodle,
@@ -60,17 +60,13 @@ export function Appraisal({
   }, [bothDone]);
 
   const judgePct = judge.status === "done" ? 1 : Math.min(0.95, elapsed / EXPECTED_JUDGE_MS);
-  const paintPct = painting.status === "done" ? 1 : Math.min(0.95, elapsed / EXPECTED_PAINT_MS);
-  const percent = Math.round((judgePct * 0.25 + paintPct * 0.65 + (catalogDone ? 0.1 : 0)) * 100);
+  const artPct = painting.status === "done" ? 1 : Math.min(0.95, elapsed / EXPECTED_ART_MS);
+  const percent = Math.round((judgePct * 0.25 + artPct * 0.65 + (catalogDone ? 0.1 : 0)) * 100);
 
   const steps: { label: string; state: "done" | "active" | "waiting" | "error"; error?: string }[] = [
+    { label: "원본 분석", state: judge.status === "done" ? "done" : judge.status === "error" ? "error" : "active", error: judge.status === "error" ? judge.error : undefined },
     {
-      label: "원본 분석",
-      state: judge.status === "done" ? "done" : judge.status === "error" ? "error" : "active",
-      error: judge.status === "error" ? judge.error : undefined,
-    },
-    {
-      label: "명화 복원",
+      label: `${style.name} 그림 제작`,
       state: painting.status === "done" ? "done" : painting.status === "error" ? "error" : "active",
       error: painting.status === "error" ? painting.error : undefined,
     },
@@ -78,64 +74,69 @@ export function Appraisal({
   ];
 
   return (
-    <section className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-      <Headline className="text-3xl sm:text-5xl">천재성 감정 중</Headline>
-      <p key={quote} className="mt-3 text-center font-serif text-muted animate-rise sm:text-lg">
-        “{QUOTES[quote]}”
+    <section className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
+      <p className="mx-auto w-fit rounded-full bg-yellow px-3 py-1 text-xs font-semibold">🔍 감정실</p>
+      <Headline className="mt-4 text-4xl sm:text-6xl">
+        천재성 <span className="text-primary">감정 중</span>
+      </Headline>
+      <p key={quote} className="mt-4 text-center text-muted animate-rise sm:text-lg">
+        {QUOTES[quote]}
       </p>
 
-      <div className="mt-8 grid items-center gap-6 md:grid-cols-[1fr_auto_1fr_1.1fr] md:gap-5">
-        <div className="mx-auto w-full max-w-60 overflow-hidden rounded-2xl border border-line bg-white shadow-soft md:max-w-none">
+      <div className="mt-12 grid items-center gap-8 md:grid-cols-[1fr_auto_1fr_1fr] md:gap-6">
+        <figure>
           {/* eslint-disable-next-line @next/next/no-img-element -- data URL from the canvas */}
-          <img src={doodle} alt="출품한 낙서" className="aspect-square w-full object-cover" />
-        </div>
-        <span className="hidden text-2xl tracking-[-0.2em] text-muted md:block" aria-hidden>
-          ›››
+          <img src={doodle} alt="출품한 낙서" className="mx-auto aspect-square w-full max-w-60 rounded-2xl border-2 border-ink bg-white object-cover shadow-[5px_5px_0_var(--sky)] md:max-w-none" />
+          <figcaption className="eyebrow mt-3 text-center">Original</figcaption>
+        </figure>
+        <span className="hidden font-accent text-4xl text-primary italic md:block" aria-hidden>
+          →
         </span>
-        <div className="relative mx-auto aspect-square w-full max-w-60 overflow-hidden rounded-2xl border border-line bg-surface shadow-soft md:max-w-none">
-          {painting.status === "done" ? (
-            // eslint-disable-next-line @next/next/no-img-element -- data URL from the API
-            <img src={painting.data.image} alt={`${style.name} 명화`} className="size-full object-cover animate-rise" />
-          ) : (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element -- preview while waiting */}
-              <img src={`/samples/${style.id}.webp`} alt="" className="size-full scale-110 object-cover opacity-50 blur-xl" />
-              <p key={fact} className="absolute inset-0 flex items-center justify-center p-5 text-center text-sm text-pretty text-ink/80 animate-rise">
-                {style.facts[fact]}
-              </p>
-            </>
-          )}
-        </div>
-
-        <ul className="flex flex-col gap-2.5">
-          {steps.map((s) => (
-            <li
-              key={s.label}
-              className={`flex items-center gap-3 rounded-xl border px-4 py-3.5 transition ${
-                s.state === "active" ? "border-accent/20 bg-accent-soft" : s.state === "error" ? "border-accent/40 bg-card" : "border-line bg-card"
-              }`}
-            >
-              <StepIcon state={s.state} />
-              <div className="min-w-0">
-                <p className={`font-medium ${s.state === "waiting" ? "text-muted" : ""}`}>
-                  {s.label} {s.state === "done" ? "완료" : s.state === "active" ? "중" : s.state === "error" ? "실패" : ""}
+        <figure>
+          <div className="relative mx-auto aspect-square w-full max-w-60 overflow-hidden rounded-2xl border-2 border-ink bg-surface md:max-w-none" style={{ boxShadow: `5px 5px 0 ${style.color}` }}>
+            {painting.status === "done" ? (
+              // eslint-disable-next-line @next/next/no-img-element -- data URL from the API
+              <img src={painting.data.image} alt={`${style.name} 작품`} className="size-full object-cover animate-rise" />
+            ) : (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element -- preview while waiting */}
+                <img src={doodle} alt="" className="size-full scale-125 object-cover opacity-40 blur-2xl" />
+                <p key={fact} className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm leading-relaxed text-pretty text-ink/75 animate-rise">
+                  {style.facts[fact]}
                 </p>
+              </>
+            )}
+          </div>
+          <figcaption className="eyebrow mt-3 text-center">{style.en}</figcaption>
+        </figure>
+
+        <ol className="flex flex-col border-t border-line">
+          {steps.map((s, i) => (
+            <li key={s.label} className="flex items-center gap-3 border-b border-line py-4">
+              <span
+                className={`flex size-7 shrink-0 items-center justify-center rounded-full font-accent text-base italic ${s.state === "waiting" ? "bg-surface text-muted" : s.state === "done" ? "bg-mint" : s.state === "error" ? "bg-accent-soft" : "bg-yellow"}`}
+              >
+                {i + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className={`text-[15px] ${s.state === "waiting" ? "text-muted" : "font-medium"}`}>{s.label}</p>
                 {s.error && <p className="mt-0.5 text-xs text-accent">{s.error}</p>}
               </div>
+              <StepIcon state={s.state} />
             </li>
           ))}
-        </ul>
+        </ol>
       </div>
 
-      <div className="mt-10 flex items-center gap-4">
-        <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface">
-          <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${percent}%` }} />
+      <div className="mt-14 flex items-center gap-5">
+        <div className="h-3 flex-1 overflow-hidden rounded-full border-2 border-ink bg-card">
+          <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${percent}%` }} />
         </div>
-        <span className="w-14 text-right font-serif text-2xl font-black tabular-nums">{percent}%</span>
+        <span className="w-16 text-right text-2xl font-semibold text-primary tabular-nums">{percent}%</span>
       </div>
 
       {failed && (
-        <div className="mt-6 flex justify-center">
+        <div className="mt-8 flex justify-center">
           <button type="button" onClick={onRetry} className={btn.primary}>
             다시 감정 맡기기
           </button>
@@ -148,16 +149,16 @@ export function Appraisal({
 function StepIcon({ state }: { state: "done" | "active" | "waiting" | "error" }) {
   if (state === "done")
     return (
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent text-sm text-white" aria-hidden>
-        ✓
+      <span className="text-sm font-semibold text-primary" aria-label="완료">
+        완료
       </span>
     );
-  if (state === "active") return <span className="size-7 shrink-0 animate-spin rounded-full border-[3px] border-dotted border-accent" aria-hidden />;
+  if (state === "active") return <span className="size-4 animate-spin rounded-full border-2 border-primary/20 border-t-primary" aria-label="진행 중" />;
   if (state === "error")
     return (
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-sm text-accent" aria-hidden>
-        !
+      <span className="text-sm font-semibold text-accent" aria-label="실패">
+        실패
       </span>
     );
-  return <span className="size-7 shrink-0 rounded-full border-2 border-line" aria-hidden />;
+  return <span className="text-sm text-muted/60">대기</span>;
 }
