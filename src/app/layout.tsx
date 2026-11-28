@@ -15,6 +15,12 @@ const accent = Instrument_Serif({
 export const metadata: Metadata = {
   title: "발더비 경매장",
   description: "15초 만에 그린 발그림이 작품이 되어 경매에 오릅니다. 당신의 발그림, 얼마일까요?",
+  openGraph: {
+    title: "발더비 경매장",
+    description: "15초 만에 그린 발그림이 작품이 되어 경매에 오릅니다. 당신의 발그림, 얼마일까요?",
+    images: [{ url: "/og.jpg", width: 1200, height: 630 }],
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

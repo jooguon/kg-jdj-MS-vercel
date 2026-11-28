@@ -20,6 +20,13 @@
   --font-sans-kr: "Pretendard Variable";
 }
 
+/* Phones held sideways: short and not desktop-wide. Only the studio changes its layout for this. */
+@custom-variant phone-land {
+  @media (orientation: landscape) and (max-height: 520px) and (max-width: 1023.98px) {
+    @slot;
+  }
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -61,6 +68,11 @@ body {
   -webkit-mask: url("/logo-mask.png") center / contain no-repeat;
   mask: url("/logo-mask.png") center / contain no-repeat;
   aspect-ratio: 1884 / 421;
+}
+.logo-mask-en {
+  -webkit-mask: url("/logo-en-mask.png") center / contain no-repeat;
+  mask: url("/logo-en-mask.png") center / contain no-repeat;
+  aspect-ratio: 1200 / 235;
 }
 
 /* Small uppercase label, like a gallery wall caption. */
@@ -111,8 +123,25 @@ body {
   animation: pulse-ring 1.4s ease-out infinite;
 }
 
+@keyframes sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.animate-sweep {
+  animation: sweep 1.8s ease-in-out infinite;
+}
+
+/* The finished painting fades in from a heavy blur but stays veiled until the auction. */
+@keyframes unveil {
+  from { opacity: 0; filter: blur(28px); }
+  to { opacity: 1; filter: blur(12px); }
+}
+.animate-unveil {
+  animation: unveil 1.2s ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-stamp, .animate-rise, .animate-pulse-ring { animation: none; }
+  .animate-stamp, .animate-rise, .animate-pulse-ring, .animate-sweep { animation: none; }
 }
 
 /* Soft floating surface: replaces borders for cards and tool bars. */

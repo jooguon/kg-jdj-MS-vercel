@@ -1,4 +1,4 @@
-import { formatWonDigits, type Appraisal } from "./auction";
+import { formatPrice, type Appraisal } from "./auction";
 import { bidderImage, getBidder } from "./bidders";
 import type { ArtStyle } from "./styles";
 
@@ -56,7 +56,7 @@ export async function renderCertificate(o: {
   const accent = cssVar("--accent", "#ff5a36");
   const yellow = cssVar("--yellow", "#ffd84d");
   const sold = o.result.price > 0;
-  const priceText = sold ? formatWonDigits(o.result.price) : "유찰";
+  const priceText = sold ? `${formatPrice(o.result.price)}원` : "유찰";
   const winner = getBidder(o.result.winner);
 
   await Promise.all(
@@ -189,12 +189,12 @@ export async function renderCertificate(o: {
   ctx.fillStyle = muted;
   if (sold && portrait) {
     // Winner's portrait in a circle, then the name.
-    const r = 26;
+    const r = 34;
     ctx.save();
     ctx.beginPath();
-    ctx.arc(left + r, H - 68, r, 0, Math.PI * 2);
+    ctx.arc(left + r, H - 70, r, 0, Math.PI * 2);
     ctx.clip();
-    ctx.drawImage(portrait, left, H - 68 - r, r * 2, r * 2);
+    ctx.drawImage(portrait, left, H - 70 - r, r * 2, r * 2);
     ctx.restore();
     ctx.fillText(`낙찰자 ${winner.name}`, left + r * 2 + 14, H - 60);
   } else {

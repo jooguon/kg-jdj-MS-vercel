@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
-import { formatWonDigits } from "@/lib/auction";
+import { formatPrice } from "@/lib/auction";
 import { bidderImage, getBidder } from "@/lib/bidders";
+import { shareLink } from "@/lib/share";
 import { Logo } from "./Logo";
 
 export const STEPS = [
@@ -16,7 +17,7 @@ export const STEPS = [
 export type StepId = (typeof STEPS)[number]["id"];
 
 export function TopBar({ step, onHome }: { step?: StepId; onHome?: () => void }) {
-  const logo = <Logo className="h-5 sm:h-6" color="var(--primary)" />;
+  const logo = <Logo variant="en" className="h-6 sm:h-7" color="var(--primary)" />;
   const current = STEPS.findIndex((s) => s.id === step);
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-bg/80 backdrop-blur-md">
@@ -122,7 +123,7 @@ export function RedDot({ className = "size-2.5" }: { className?: string }) {
 
 export function BidderAvatar({ id, size = "md" }: { id: string; size?: "sm" | "md" | "lg" }) {
   const b = getBidder(id);
-  const cls = size === "lg" ? "size-12" : size === "sm" ? "size-8" : "size-10";
+  const cls = size === "lg" ? "size-16" : size === "sm" ? "size-11" : "size-12 sm:size-14";
   return (
     // eslint-disable-next-line @next/next/no-img-element -- small static portraits
     <img src={bidderImage(b.id)} alt={b.name} title={b.name} className={`shrink-0 rounded-full bg-surface object-cover ${cls}`} />
@@ -130,7 +131,7 @@ export function BidderAvatar({ id, size = "md" }: { id: string; size?: "sm" | "m
 }
 
 /** Animates from the previous value to the new one. */
-export function CountUp({ value, ms = 900, format = formatWonDigits }: { value: number; ms?: number; format?: (n: number) => string }) {
+export function CountUp({ value, ms = 900, format = formatPrice }: { value: number; ms?: number; format?: (n: number) => string }) {
   const [shown, setShown] = useState(0);
   const [from, setFrom] = useState(0);
   const [target, setTarget] = useState(value);
@@ -161,6 +162,72 @@ export function useCycle(length: number, ms: number, active = true) {
     return () => clearInterval(id);
   }, [length, ms, active]);
   return i;
+}
+
+/** Share sheet on phones, "link copied" everywhere else. `path` is relative to this site. */
+export function ShareButton({
+  title,
+  text,
+  path,
+  file,
+  className = btn.outline,
+  label = "공유하기",
+  variant = "button",
+}: {
+  title: string;
+  text: string;
+  path: string;
+  /** Image to attach on phones (e.g. the certificate). Must be ready before the tap. */
+  file?: File | null;
+  className?: string;
+  label?: string;
+  variant?: "button" | "icon";
+}) {
+  const [note, setNote] = useState("");
+  useEffect(() => {
+    if (!note) return;
+    const id = setTimeout(() => setNote(""), 2200);
+    return () => clearTimeout(id);
+  }, [note]);
+  const onClick = async () => {
+    const r = await shareLink({ title, text, url: new URL(path, location.origin).href, file });
+    if (r === "copied") setNote("링크를 복사했어요!");
+    else if (r === "failed") setNote("복사하지 못했어요");
+  };
+
+  if (variant === "icon")
+    return (
+      <span className="relative">
+        <button type="button" onClick={onClick} aria-label={label} title={label} className="flex size-9 items-center justify-center rounded-full bg-surface transition hover:bg-yellow">
+          <ShareIcon className="size-[18px]" />
+        </button>
+        {note && (
+          <span role="status" className="absolute top-full right-0 z-10 mt-2 rounded-full bg-ink px-3 py-1.5 text-xs font-bold whitespace-nowrap text-white animate-rise">
+            {note}
+          </span>
+        )}
+      </span>
+    );
+
+  return (
+    <button type="button" className={className} onClick={onClick}>
+      {note || (
+        <>
+          <ShareIcon className="size-5" /> {label}
+        </>
+      )}
+    </button>
+  );
+}
+
+/** Box with an arrow coming out of it, the usual "share" glyph. */
+export function ShareIcon({ className = "size-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M12 3v12M7.5 7.5 12 3l4.5 4.5" />
+      <path d="M8 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2" />
+    </svg>
+  );
 }
 
 export const btn = {

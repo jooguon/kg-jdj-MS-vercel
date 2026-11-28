@@ -3,12 +3,29 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { GalleryView } from "@/components/GalleryView";
 import { TopBar } from "@/components/ui";
+import { formatPrice } from "@/lib/auction";
 import { getStore } from "@/lib/store";
 
-export const metadata: Metadata = {
+const BASE_META = {
   title: "전시관 · 발더비 경매장",
   description: "발더비 경매장에서 낙찰된 발그림들. 가장 비싸게 팔린 작품은 무엇일까요?",
 };
+
+/** A shared link (/gallery?art=id) previews that work: its title, artist, price and painting. */
+export async function generateMetadata({ searchParams }: PageProps<"/gallery">): Promise<Metadata> {
+  const { art: id } = await searchParams;
+  const art = typeof id === "string" ? (await getStore()?.list())?.find((a) => a.id === id) : undefined;
+  if (!art) return BASE_META;
+  const title = `‘${art.title}’ · ${art.artist} 작`;
+  const description = `15초 발그림이 ${formatPrice(art.price)}원에 낙찰! 당신의 발그림은 얼마일까요?`;
+  const image = { url: `/api/art/${art.id}/og`, width: 800, height: 800, alt: art.title };
+  return {
+    title: `${title} · 발더비 경매장`,
+    description,
+    openGraph: { title, description, images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image.url] },
+  };
+}
 
 const RANKED = 4;
 

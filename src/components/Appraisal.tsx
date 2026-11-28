@@ -94,20 +94,34 @@ export function Appraisal({
         </span>
         <figure>
           <div className="relative mx-auto aspect-square w-full max-w-60 overflow-hidden rounded-2xl border-2 border-ink bg-surface md:max-w-none" style={{ boxShadow: `5px 5px 0 ${style.color}` }}>
-            {painting.status === "done" ? (
+            {/* The doodle melts into a blur while the painting is made; the finished work arrives still veiled. */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- data URL from the canvas */}
+            <img
+              src={doodle}
+              alt=""
+              className="absolute inset-0 size-full object-cover transition-[filter,opacity,transform] duration-700"
+              style={{
+                filter: `blur(${(2 + artPct * 14).toFixed(1)}px) saturate(${1 + artPct})`,
+                transform: `scale(${1 + artPct * 0.12})`,
+                opacity: painting.status === "done" ? 0 : 1,
+              }}
+            />
+            <span className="absolute inset-0 mix-blend-multiply transition-opacity duration-700" style={{ backgroundColor: style.color, opacity: painting.status === "done" ? 0 : 0.15 + artPct * 0.35 }} aria-hidden />
+            {painting.status === "done" && (
               // eslint-disable-next-line @next/next/no-img-element -- data URL from the API
-              <img src={painting.data.image} alt={`${style.name} 작품`} className="size-full object-cover animate-rise" />
-            ) : (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element -- preview while waiting */}
-                <img src={doodle} alt="" className="size-full scale-125 object-cover opacity-40 blur-2xl" />
-                <p key={fact} className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm leading-relaxed text-pretty text-ink/75 animate-rise">
-                  {style.facts[fact]}
-                </p>
-              </>
+              <img src={painting.data.image} alt={`${style.name} 작품 (경매장에서 공개)`} className="absolute inset-0 size-full scale-110 object-cover animate-unveil" />
             )}
+            {painting.status !== "done" && painting.status !== "error" && <span className="absolute inset-0 animate-sweep bg-[linear-gradient(110deg,transparent_35%,rgb(255_255_255/0.55)_50%,transparent_65%)]" aria-hidden />}
+            <span className="absolute inset-x-0 bottom-3 flex justify-center">
+              <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold shadow-sm">
+                {painting.status === "done" ? "✨ 완성! 경매장에서 공개돼요" : painting.status === "error" ? "변환 실패" : `${style.name} 그림으로 바꾸는 중… ${Math.round(artPct * 100)}%`}
+              </span>
+            </span>
           </div>
-          <figcaption className="eyebrow mt-3 text-center">{style.en}</figcaption>
+          <figcaption key={fact} className="mt-3 min-h-10 text-center text-xs leading-relaxed text-pretty text-muted animate-rise">
+            <span className="eyebrow block">{style.en}</span>
+            {painting.status !== "done" && style.facts[fact]}
+          </figcaption>
         </figure>
 
         <ol className="flex flex-col border-t border-line">

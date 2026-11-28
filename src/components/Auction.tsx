@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useEffectEvent, useMemo, useState } from "react";
-import { roundPrice, type Appraisal, type ShillResult } from "@/lib/auction";
+import { formatPrice, roundPrice, type Appraisal, type ShillResult } from "@/lib/auction";
 import { getBidder } from "@/lib/bidders";
 import type { ArtStyle } from "@/lib/styles";
 import { BidderAvatar, CountUp, HungArt, RedDot, WallLabel } from "./ui";
@@ -140,10 +140,11 @@ export function Auction({
           <p className="eyebrow">현재 가상 입찰가</p>
           <p className="mt-2 text-5xl font-semibold tracking-[-0.04em] text-primary tabular-nums sm:text-6xl">
             <CountUp value={current} />
+            <span className="ml-1.5 text-2xl font-bold">원</span>
           </p>
         </div>
 
-        <ul className="flex min-h-[248px] flex-col gap-1.5" aria-live="polite">
+        <ul className="flex min-h-[288px] flex-col gap-1.5 sm:min-h-[312px]" aria-live="polite">
           {noBids && (
             <li className="py-10 text-center text-muted">{mode === "hammer" ? "끝내 손을 드는 사람이 없었습니다…" : "응찰자를 기다리는 중…"}</li>
           )}
@@ -153,7 +154,7 @@ export function Auction({
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 animate-rise ${e.kind === "shill-lost" ? "bg-accent-soft" : e.kind === "shill-won" ? "bg-yellow" : i === 0 ? "bg-surface" : "opacity-45"}`}
             >
               {e.kind === "shill-lost" ? (
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xl" aria-hidden>
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-accent-soft text-2xl sm:size-14" aria-hidden>
                   🚨
                 </span>
               ) : (
@@ -166,7 +167,7 @@ export function Auction({
                 </p>
                 <p className="truncate text-sm text-muted">{e.line}</p>
               </div>
-              {e.kind !== "shill-lost" && <span className="shrink-0 text-sm tabular-nums">{(e.price / 10_000).toLocaleString("ko-KR")}만</span>}
+              {e.kind !== "shill-lost" && <span className="shrink-0 text-sm tabular-nums">{formatPrice(e.price)}</span>}
             </li>
           ))}
         </ul>

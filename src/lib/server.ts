@@ -43,9 +43,10 @@ export async function readSubmission(req: Request): Promise<Submission> {
   return { png, dataUrl: image as string, word, style };
 }
 
+/** Same size and sampling as the studio canvas, so "트렌드 적중" there always matches the price here. */
 export async function analyzeDoodle(png: Buffer): Promise<DoodleStats> {
-  const { data, info } = await sharp(png).resize(256, 256, { fit: "fill" }).flatten({ background: "#ffffff" }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  return analyzePixels(data, info.width * info.height, 1);
+  const { data, info } = await sharp(png).resize(1024, 1024, { fit: "fill" }).flatten({ background: "#ffffff" }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return analyzePixels(data, info.width * info.height, 7);
 }
 
 /** Exponential: about 10,000 won at 0 points to about 10 billion won at 100 points, rounded to 2 significant digits. */

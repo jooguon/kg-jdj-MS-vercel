@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { formatWon, formatWonDigits, SCORE_ITEMS, type Appraisal } from "@/lib/auction";
+import { formatPrice, formatWon, formatWonDigits, SCORE_ITEMS, type Appraisal } from "@/lib/auction";
 import { getBidder } from "@/lib/bidders";
 import type { ArtStyle } from "@/lib/styles";
 import type { AuctionResult } from "./Auction";
-import { BidderAvatar, btn, Headline, HungArt, RedDot } from "./ui";
+import { BidderAvatar, btn, Headline, HungArt, RedDot, ShareButton } from "./ui";
 
 export type ExhibitState = { status: "idle" | "saving" } | { status: "done"; id: string } | { status: "error"; error: string };
 
@@ -19,6 +19,7 @@ export function Certificate({
   word,
   lot,
   saving,
+  certFile,
   exhibit,
   onSave,
   onExhibit,
@@ -33,6 +34,7 @@ export function Certificate({
   word: string;
   lot: string;
   saving: boolean;
+  certFile: File | null;
   exhibit: ExhibitState;
   onSave: () => void;
   onExhibit: () => void;
@@ -78,11 +80,12 @@ export function Certificate({
 
           <div className="mt-8 border-t border-line pt-6">
             <p className="eyebrow">{sold ? "최종 가상 낙찰가" : "경매 결과"}</p>
-            <p className={`mt-2 flex items-center gap-3 text-5xl font-semibold tracking-[-0.04em] tabular-nums ${sold ? "text-primary" : "text-muted"}`}>
+            <p className={`mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-5xl font-semibold tracking-[-0.04em] tabular-nums ${sold ? "text-primary" : "text-muted"}`}>
               {sold && <RedDot className="size-3.5 animate-stamp" />}
               {sold ? formatWonDigits(result.price) : "유찰"}
+              {/* Korean units next to the digits, so the amount reads at a glance */}
+              {sold && <span className="text-lg font-semibold tracking-tight text-muted">{formatWon(result.price)}</span>}
             </p>
-            {sold && <p className="mt-1 text-sm text-muted">{formatWon(result.price)}</p>}
             {appraisal.trend.applied && sold && (
               <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-mint px-3 py-1 text-xs font-semibold">
                 오늘의 트렌드 ‘{appraisal.trend.name}’ <span className="font-accent text-sm italic">×{appraisal.trend.multiplier}</span>
@@ -108,7 +111,7 @@ export function Certificate({
           <div className="mt-6 flex items-center gap-3">
             {sold ? (
               <>
-                <BidderAvatar id={winner.id} />
+                <BidderAvatar id={winner.id} size="lg" />
                 <p className="text-sm">
                   <span className="text-muted">낙찰자 </span>
                   <b className="font-semibold">{winner.name}</b>
@@ -121,33 +124,48 @@ export function Certificate({
         </div>
       </div>
 
-      <div className="mx-auto mt-14 grid max-w-3xl gap-2.5 sm:grid-cols-3">
-        <button type="button" onClick={onSave} disabled={saving} className={btn.primary}>
-          {saving ? "증서 인쇄 중…" : "증서 저장"}
-        </button>
-        {canExhibit ? (
-          exhibit.status === "done" ? (
-            <Link href={`/gallery?art=${exhibit.id}`} className={btn.accent}>
-              전시관에서 보기 →
-            </Link>
+      {/* Sharing is the main action here; the rest sit underneath */}
+      <div className="mx-auto mt-14 max-w-3xl">
+        <ShareButton
+          title="발더비 경매장"
+          text={
+            sold
+              ? `내 15초 발그림 ‘${appraisal.title}’이 ${formatPrice(result.price)}원에 낙찰됐어요! 당신의 발그림은 얼마일까요? 🖼`
+              : `내 15초 발그림 ‘${appraisal.title}’은 아쉽게 유찰… 당신의 발그림은 얼마일까요? 🖼`
+          }
+          path={exhibit.status === "done" ? `/gallery?art=${exhibit.id}` : "/"}
+          file={certFile}
+          label={sold ? "친구에게 자랑하기" : "친구에게 공유하기"}
+          className={`${btn.primary} h-16 w-full text-lg`}
+        />
+        <div className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
+          <button type="button" onClick={onSave} disabled={saving} className={btn.outline}>
+            {saving ? "증서 인쇄 중…" : "증서 저장"}
+          </button>
+          {canExhibit ? (
+            exhibit.status === "done" ? (
+              <Link href={`/gallery?art=${exhibit.id}`} className={btn.accent}>
+                전시관에서 보기 →
+              </Link>
+            ) : (
+              <button type="button" onClick={onExhibit} disabled={exhibit.status === "saving"} className={btn.accent}>
+                {exhibit.status === "saving" ? "작품 거는 중…" : "전시관에 걸기"}
+              </button>
+            )
           ) : (
-            <button type="button" onClick={onExhibit} disabled={exhibit.status === "saving"} className={btn.accent}>
-              {exhibit.status === "saving" ? "작품 거는 중…" : "전시관에 걸기"}
-            </button>
-          )
-        ) : (
-          <Link href="/gallery" className={btn.outline}>
-            전시관 구경하기
-          </Link>
-        )}
-        <button type="button" onClick={onNew} className={btn.outline}>
-          새 작품 출품하기
-        </button>
+            <Link href="/gallery" className={btn.outline}>
+              전시관 구경하기
+            </Link>
+          )}
+          <button type="button" onClick={onNew} className={btn.outline}>
+            새 작품 출품하기
+          </button>
+        </div>
       </div>
       {exhibit.status === "error" && <p className="mt-3 text-center text-sm text-accent">{exhibit.error}</p>}
       {sold && !appraisal.exhibitable && <p className="mt-3 text-center text-xs text-muted">경매장 규정상 이 작품은 전시관에 걸 수 없어요.</p>}
       {canExhibit && exhibit.status !== "done" && (
-        <p className="mt-3 text-center text-xs text-muted">전시관에 걸면 작가명 ‘{artist}’과 작품이 다른 사람들에게 공개돼요.</p>
+        <p className="mt-3 text-center text-xs text-muted">전시관에 걸면 작가명 ‘{artist}’과 작품이 다른 사람들에게 공개되고, 작품 링크로 공유할 수 있어요.</p>
       )}
     </section>
   );

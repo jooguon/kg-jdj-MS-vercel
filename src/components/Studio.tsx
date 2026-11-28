@@ -22,7 +22,14 @@ const EMPTY: CanvasInfo = {
  * Desktop: tool bar | canvas | styles, all three columns ending on the same line.
  * The canvas width is capped by viewport height so the studio fits on a laptop screen.
  */
-const GRID_VARS = { "--cw": "min(520px, max(360px, calc(100dvh - 345px)))" } as CSSProperties;
+/**
+ * Phones held sideways: canvas on the left sized by the screen height (top bar + word row + padding),
+ * tools and styles on the right. Works for any phone height.
+ */
+const GRID_VARS = {
+  "--cw": "min(520px, max(360px, calc(100dvh - 345px)))",
+  "--cl": "max(200px, calc(100dvh - 142px))",
+} as CSSProperties;
 
 export function Studio({
   word,
@@ -74,21 +81,21 @@ export function Studio({
   };
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-7">
+    <section className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-7 phone-land:py-3">
       {/* Title + today's trend */}
-      <h1 className="text-center text-[28px] leading-tight font-black tracking-[-0.05em] sm:text-[44px]">
+      <h1 className="text-center text-[28px] leading-tight font-black tracking-[-0.05em] sm:text-[44px] phone-land:hidden">
         당신의 <span className="text-primary">발그림</span>, 얼마일까요?
       </h1>
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 phone-land:hidden">
         <span className={`rounded-full px-4 py-2 text-sm font-extrabold transition ${trendMet ? "bg-mint" : "bg-yellow"}`}>
           {trendMet ? "✓ 트렌드 적중" : "🔥 오늘의 트렌드"} · {trend.name} ×{trend.multiplier}
         </span>
         <span className="text-sm font-medium text-muted">{trendMet ? "이대로면 낙찰가가 껑충 뛰어요" : `${trend.hint} 낙찰가 UP`}</span>
       </div>
 
-      <div className="mt-7 grid grid-cols-1 gap-5 lg:grid-cols-[76px_var(--cw)_minmax(300px,380px)] lg:items-stretch lg:justify-center lg:gap-6" style={GRID_VARS}>
+      <div className="mt-7 grid grid-cols-1 gap-5 lg:grid-cols-[76px_var(--cw)_minmax(300px,380px)] lg:items-stretch lg:justify-center lg:gap-6 phone-land:mt-0 phone-land:grid-cols-[var(--cl)_minmax(0,1fr)] phone-land:items-start phone-land:gap-x-5 phone-land:gap-y-3" style={GRID_VARS}>
         {/* Tool bar */}
-        <aside className="soft order-2 flex min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-3xl bg-card px-3 py-2.5 sm:justify-between lg:order-none lg:flex-col lg:flex-nowrap lg:rounded-full lg:px-0 lg:py-5">
+        <aside className="soft order-2 flex min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-3xl bg-card px-3 py-2.5 sm:justify-between lg:order-none lg:flex-col lg:flex-nowrap lg:rounded-full lg:px-0 lg:py-5 phone-land:order-none phone-land:col-start-2 phone-land:row-start-1 phone-land:justify-center phone-land:gap-x-3 phone-land:py-2">
           <div className="flex items-center gap-2 lg:flex-col lg:gap-3" role="radiogroup" aria-label="물감 색">
             {INKS.map((c) => (
               <button
@@ -133,11 +140,11 @@ export function Studio({
         </aside>
 
         {/* Canvas */}
-        <div className="order-1 flex min-w-0 flex-col lg:order-none">
-          <div className="mb-3 flex h-[52px] items-center justify-between gap-3">
+        <div className="order-1 flex min-w-0 flex-col lg:order-none phone-land:order-none phone-land:col-start-1 phone-land:row-span-2 phone-land:row-start-1">
+          <div className="mb-3 flex h-[52px] items-center justify-between gap-3 phone-land:mb-2 phone-land:h-10 phone-land:gap-1.5">
             <div className="flex items-center gap-2.5">
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xl font-black tabular-nums text-white transition-colors sm:px-5 sm:py-2.5 sm:text-2xl ${
+                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xl font-black tabular-nums text-white transition-colors sm:px-5 sm:py-2.5 sm:text-2xl phone-land:gap-1 phone-land:px-3 phone-land:py-1.5 phone-land:text-base whitespace-nowrap ${
                   timeUp ? "bg-muted" : urgent ? "animate-pulse-ring bg-accent" : "bg-primary"
                 }`}
                 aria-live="polite"
@@ -149,10 +156,10 @@ export function Studio({
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-sm font-bold text-muted sm:text-base">제시어</span>
-              <span className="text-[28px] leading-none font-black tracking-[-0.04em] sm:text-[34px]">{word}</span>
+              <span className="text-sm font-bold text-muted sm:text-base phone-land:hidden">제시어</span>
+              <span className="text-[28px] leading-none font-black tracking-[-0.04em] whitespace-nowrap sm:text-[34px] phone-land:text-xl">{word}</span>
               {canReroll && !startedAt && (
-                <button type="button" onClick={onReroll} className="self-center rounded-full bg-surface px-2.5 py-1 text-xs font-bold text-muted hover:text-ink">
+                <button type="button" onClick={onReroll} className="self-center rounded-full bg-surface px-2.5 py-1 text-xs font-bold whitespace-nowrap text-muted hover:text-ink phone-land:px-2">
                   바꾸기
                 </button>
               )}
@@ -178,7 +185,7 @@ export function Studio({
             )}
           </div>
 
-          <dl className="mt-4 flex items-baseline justify-center gap-7 text-[15px] font-bold text-muted">
+          <dl className="mt-4 flex items-baseline justify-center gap-7 text-[15px] font-bold text-muted phone-land:hidden">
             {[
               ["획 수", String(info.strokes)],
               ["색상", String(info.stats.colors.length)],
@@ -193,9 +200,12 @@ export function Studio({
         </div>
 
         {/* Styles: fills the canvas column height so both end on the same line */}
-        <div className="order-3 flex min-w-0 flex-col lg:order-none">
-          <div className="mb-3 flex h-[52px] items-center justify-between">
-            <p className="text-2xl font-black tracking-[-0.04em]">화풍을 골라주세요</p>
+        <div className="order-3 flex min-w-0 flex-col lg:order-none phone-land:order-none phone-land:col-start-2 phone-land:row-start-2">
+          <p className={`mb-2 hidden w-fit rounded-full px-3 py-1 text-xs font-extrabold phone-land:block ${trendMet ? "bg-mint" : "bg-yellow"}`}>
+            {trendMet ? "✓ 트렌드 적중" : `🔥 ${trend.name} ×${trend.multiplier}`} · <span className="font-semibold">{trendMet ? "낙찰가 UP" : trend.hint}</span>
+          </p>
+          <div className="mb-3 flex h-[52px] items-center justify-between phone-land:mb-2 phone-land:h-auto">
+            <p className="text-2xl font-black tracking-[-0.04em] phone-land:text-lg">화풍을 골라주세요</p>
             <button
               type="button"
               onClick={() => setStyle(ART_STYLES[Math.floor(Math.random() * ART_STYLES.length)])}
@@ -205,7 +215,7 @@ export function Studio({
             </button>
           </div>
 
-          <ul className="grid flex-1 auto-rows-fr grid-cols-2 gap-2.5">
+          <ul className="grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 phone-land:gap-1.5">
             {ART_STYLES.map((s) => {
               const selected = style?.id === s.id;
               return (
@@ -214,14 +224,14 @@ export function Studio({
                     type="button"
                     onClick={() => setStyle(s)}
                     aria-pressed={selected}
-                    className="relative flex h-full w-full items-center gap-2.5 rounded-2xl p-2 pr-3 text-left transition hover:brightness-[0.97]"
+                    className="relative flex h-full w-full items-center gap-2.5 rounded-2xl p-2 pr-3 text-left transition hover:brightness-[0.97] phone-land:gap-2 phone-land:rounded-xl phone-land:p-1.5"
                     style={{ backgroundColor: selected ? s.color : `${s.color}33` }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element -- tiny static thumbnails */}
-                    <img src={`/styles/${s.id}.webp`} alt="" className="size-11 shrink-0 rounded-xl object-cover" />
+                    <img src={`/styles/${s.id}.webp`} alt="" className="size-11 shrink-0 rounded-xl object-cover phone-land:size-8 phone-land:rounded-lg" />
                     <span className="min-w-0">
                       <span className="block truncate text-[15px] leading-tight font-extrabold">{s.name}</span>
-                      <span className="block truncate text-[11px] font-semibold opacity-50">{s.en}</span>
+                      <span className="block truncate text-[11px] font-semibold opacity-50 phone-land:hidden">{s.en}</span>
                     </span>
                     {selected && (
                       <span className="absolute top-1/2 right-2.5 flex size-6 -translate-y-1/2 items-center justify-center rounded-full bg-ink text-xs text-white" aria-hidden>
@@ -234,7 +244,7 @@ export function Studio({
             })}
           </ul>
 
-          <p className="mt-3 min-h-5 truncate text-sm font-medium text-muted">
+          <p className="mt-3 min-h-5 truncate text-sm font-medium text-muted phone-land:hidden">
             {style ? (
               <>
                 <b className="font-extrabold text-ink">{style.name}</b> — {style.tagline}
@@ -248,7 +258,7 @@ export function Studio({
             type="button"
             onClick={submit}
             disabled={!ready}
-            className={`mt-3 flex h-[60px] w-full items-center justify-center rounded-full bg-primary text-lg font-black text-white shadow-[0_12px_24px_-12px_rgb(59_91_255/0.9)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:bg-primary/25 disabled:shadow-none disabled:hover:translate-y-0 ${
+            className={`mt-3 flex h-[60px] w-full items-center phone-land:mt-2 phone-land:h-12 phone-land:text-base justify-center rounded-full bg-primary text-lg font-black text-white shadow-[0_12px_24px_-12px_rgb(59_91_255/0.9)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:bg-primary/25 disabled:shadow-none disabled:hover:translate-y-0 ${
               ready && timeUp ? "animate-pulse-ring" : ""
             }`}
           >

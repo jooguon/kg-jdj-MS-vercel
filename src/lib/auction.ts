@@ -28,16 +28,23 @@ export const SCORE_ITEMS: { key: keyof Scores; label: string; max: number }[] = 
 /** Below this score nobody bids. */
 export const RESERVE_SCORE = 30;
 
-/** 3,200,000,000 -> "32억 원", 125,000,000 -> "1억 2,500만 원" */
-export function formatWon(n: number): string {
-  if (n <= 0) return "0 원";
-  const eok = Math.floor(n / 100_000_000);
-  const man = Math.floor((n % 100_000_000) / 10_000);
+/** 210,000,000 -> "2억 1,000만", 3,200,000,000 -> "32억", 45,000 -> "4만 5,000" */
+export function formatPrice(n: number): string {
+  const v = Math.max(0, Math.round(n));
+  if (v === 0) return "0";
+  const eok = Math.floor(v / 100_000_000);
+  const man = Math.floor((v % 100_000_000) / 10_000);
+  const won = v % 10_000;
   const parts: string[] = [];
   if (eok) parts.push(`${eok.toLocaleString("ko-KR")}억`);
   if (man) parts.push(`${man.toLocaleString("ko-KR")}만`);
-  if (!parts.length) parts.push(n.toLocaleString("ko-KR"));
-  return `${parts.join(" ")} 원`;
+  if (won && !eok) parts.push(won.toLocaleString("ko-KR"));
+  return parts.join(" ");
+}
+
+/** "2억 1,000만 원" */
+export function formatWon(n: number): string {
+  return `${formatPrice(n)} 원`;
 }
 
 /** ₩128,000,000 */

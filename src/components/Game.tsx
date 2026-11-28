@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from "react";
 import { lotNumber, type Appraisal } from "@/lib/auction";
 import { renderCertificate } from "@/lib/resultCard";
 import type { ArtStyle } from "@/lib/styles";
@@ -67,6 +67,7 @@ export function Game() {
   const [result, setResult] = useState<AuctionResult | null>(null);
   const [exhibit, setExhibit] = useState<ExhibitState>({ status: "idle" });
   const [saving, setSaving] = useState(false);
+  const [certFile, setCertFile] = useState<File | null>(null);
   const submissionId = useRef(0);
 
   const go = (p: Phase) => {
@@ -88,6 +89,7 @@ export function Game() {
     setLot(lotNumber());
     setResult(null);
     setExhibit({ status: "idle" });
+    setCertFile(null);
     go("studio");
   };
 
@@ -122,26 +124,45 @@ export function Game() {
     if (painting.status === "error") requestPainting(submissionId.current, body);
   };
 
+  const buildCertificate = async (): Promise<File | null> => {
+    if (judge.status !== "done" || painting.status !== "done" || !result || !style) return null;
+    const blob = await renderCertificate({
+      lot,
+      word,
+      style,
+      artist,
+      doodle,
+      painting: painting.data.image,
+      appraisal: judge.data,
+      result,
+    });
+    return new File([blob], `balderby-lot-${lot}.png`, { type: "image/png" });
+  };
+
+  // Draw the certificate as soon as the result is shown, so "share" can attach it instantly
+  // (phones only allow the share sheet right after a tap, with no slow work in between).
+  const prepareCertificate = useEffectEvent(() => buildCertificate());
+  useEffect(() => {
+    if (phase !== "certificate" || certFile) return;
+    let alive = true;
+    prepareCertificate()
+      .then((f) => alive && f && setCertFile(f))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [phase, certFile]);
+
   const saveCertificate = async () => {
-    if (judge.status !== "done" || painting.status !== "done" || !result || !style) return;
     setSaving(true);
     try {
-      const blob = await renderCertificate({
-        lot,
-        word,
-        style,
-        artist,
-        doodle,
-        painting: painting.data.image,
-        appraisal: judge.data,
-        result,
-      });
-      const file = new File([blob], `balderby-lot-${lot}.png`, { type: "image/png" });
+      const file = certFile ?? (await buildCertificate());
+      if (!file) return;
       const isTouch = window.matchMedia("(pointer: coarse)").matches;
       if (isTouch && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: "발더비 경매장 낙찰 증서" }).catch(() => undefined);
       } else {
-        const url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(file);
         const a = document.createElement("a");
         a.href = url;
         a.download = file.name;
@@ -218,6 +239,7 @@ export function Game() {
             word={word}
             lot={lot}
             saving={saving}
+            certFile={certFile}
             exhibit={exhibit}
             onSave={saveCertificate}
             onExhibit={hangInGallery}
@@ -230,9 +252,9 @@ export function Game() {
 }
 
 const LOBBY_WORKS = [
-  { id: "pop-art", title: "노란 고양이의 15분", medium: "캔버스에 실크스크린", price: "₩412,000,000" },
-  { id: "fauvism", title: "분홍 하늘 아래 야옹", medium: "캔버스에 유채", price: "₩1,280,000,000" },
-  { id: "watercolor", title: "봄날의 낮잠", medium: "종이에 수채", price: "₩96,000,000" },
+  { id: "pop-art", title: "노란 고양이의 15분", medium: "캔버스에 실크스크린", price: "4억 1,200만" },
+  { id: "fauvism", title: "분홍 하늘 아래 야옹", medium: "캔버스에 유채", price: "12억 8,000만" },
+  { id: "watercolor", title: "봄날의 낮잠", medium: "종이에 수채", price: "9,600만" },
 ];
 
 function Lobby({ storedName, onEnter }: { storedName: string; onEnter: (name: string) => void }) {
@@ -262,13 +284,13 @@ function Lobby({ storedName, onEnter }: { storedName: string; onEnter: (name: st
             onEnter(name);
           }}
         >
-          <span className="eyebrow shrink-0">작가명</span>
+          <span className="shrink-0 text-sm font-bold text-muted">작가명</span>
           <input
             value={name}
             onChange={(e) => setDraft(e.target.value)}
             maxLength={12}
             placeholder="무명 작가"
-            className="min-w-0 flex-1 bg-transparent py-2 text-[15px] font-medium outline-none placeholder:text-muted/60"
+            className="min-w-0 flex-1 bg-transparent py-2 text-lg font-semibold outline-none placeholder:text-muted/60 sm:text-xl"
             aria-label="작가명"
           />
           <button type="submit" className={`${btn.primary} py-3`}>
